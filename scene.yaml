@@ -3,10 +3,12 @@
 sources:
     osmTile:
         type: GeoJSON
-        url: //vector.mapzen.com/osm/all/16/19293/24640.json
+        # url: //vector.mapzen.com/osm/all/16/19293/24640.json
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.json
     terrain:
         type: GeoJSON
-        url: data/19293-24640-16.json
+        # url: data/19293-24640-16.json
+        url: data/655-1582-12.json
 scene:
     background: 
         color: white
@@ -20,58 +22,150 @@ lights:
         ambient: .5
         diffuse: 1.
 styles:
-    elevate:
+    functions-map:
+        shaders:
+            defines:
+                EPSILON: 0.0000001
+            blocks:
+                global: |
+                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax, bool clamp) {
+                        if (abs(inputMin - inputMax) < EPSILON){
+                            return outputMin;
+                        } else {
+                            float outVal = ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
+                        
+                            if( clamp ){
+                                if(outputMax < outputMin){
+                                    if( outVal < outputMax ) outVal = outputMax;
+                                    else if( outVal > outputMin ) outVal = outputMin;
+                                }else{
+                                    if( outVal > outputMax ) outVal = outputMax;
+                                    else if( outVal < outputMin ) outVal = outputMin;
+                                }
+                            }
+                            return outVal;
+                        }
+                    }
+                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax) {
+                        return map(value, inputMin, inputMax, outputMin, outputMax, true); 
+                    }
+    geometry-projection:
+        shaders:
+            defines:
+                EARTH_RADIUS: 6378137.0
+                PI: 3.14159265358979323846
+                HALF_PI: 1.570796327
+                QUATER_PI: .785398163
+                deg2rad(d): (((d)*3.14159265358979323846)/180.0)
+                rad2deg(d): (((d)*180.0)/3.14159265358979323846)
+            blocks:
+                global: |
+                    //
+                    //    The following functions take or return there results in degrees
+                    //    http://wiki.openstreetmap.org/wiki/Mercator
+                    float y2lat_d (float y) { return rad2deg(2.0*atan(exp(deg2rad(y)))-HALF_PI); }
+                    float x2lon_d (float x) { return x; }
+                    float lat2y_d (float lat) { return rad2deg(log(tan(QUATER_PI+ deg2rad(lat)/2.0))); }
+                    float lon2x_d (float lon) { return lon; }
+                    //
+                    //    The following functions take or return there results in something close to meters, along the equator 
+                    //    http://wiki.openstreetmap.org/wiki/Mercator
+                    float y2lat_m (float y) { return rad2deg(2.0*atan(exp((y/EARTH_RADIUS)))-HALF_PI); }
+                    float x2lon_m (float x) { return rad2deg(x/EARTH_RADIUS); }
+                    float lat2y_m (float lat) { return EARTH_RADIUS*log(tan(QUATER_PI+ deg2rad(lat)/2.0)); }
+                    float lon2x_m (float lon) { return deg2rad(lon)*EARTH_RADIUS; }
+    geometry-terrain:
+        animated: true
+        mix: [functions-map, geometry-projection]
         shaders:
             uniforms:
-                u_terrain: data/19293-24640-16.png
-                u_bbox: [-74.020386, -74.014321, 40.709374, 40.7146]
-                u_range: [-12, 33]
+                # u_terrain: data/19293-24640-16.png
+                u_terrain: 655-1582-12.png
+                # u_bbox: [-74.020386, -74.014321, 40.709374, 40.7146]
+                # u_range: [-12, 33]
+                u_bbox: [-122.43164, -122.34375, 37.78808, 37.85751]
+                u_range: [-37, 138]
             blocks:
-                color:
-                    vec2 worldPos = u_map_position.xy+v_position.xy;
+                global: |
+                    float getColorHeight() {
+                        vec2 worldPos = u_map_position.xy + v_position.xy;
+                        vec2 pos = vec2(x2lon_m(worldPos.x),y2lat_m(worldPos.y));
+                        vec2 st = vec2(0.0);
+                        st.x = map(worldPos.x, -122.43164, -122.34375, 0., 1.);
+                        st.y = map(worldPos.y, 37.78808, 37.85751, 0., 1.);
+                        return texture2D(u_terrain, st).r;
+                    }
+
+                    float getHeight() {
+                        return map(getColorHeight(), 0., 1., -12., 33.);
+                    }
+
+                    mat3 rotateX3D(float phi){
+                        return mat3(
+                            vec3(1.,0.,0.),
+                            vec3(0.,cos(phi),-sin(phi)),
+                            vec3(0.,sin(phi),cos(phi)));
+                    }
+                position: |
+                    position.z += getHeight();
+                    float t = u_time*0.05; 
+                    position.xyz = rotateX3D(abs(sin(t))*0.5) * position.xyz;
+    elevate_ply:
+        base: polygons
+        mix: [geometry-terrain]
+    elevate_cls:
+        base: polygons
+        mix: [geometry-terrain]
+        shaders:
+            blocks:
+                color: |
+                    color.rgb = vec3(getColorHeight());
+    elevate_lns:
+        base: lines
+        mix: [geometry-terrain]
 layers:
     earth:
         data: { source: osmTile }
         draw:
-            polygons:
+            elevate_ply:
                 order: 2
                 color: gray
                 width: 2px
     water:
         data: { source: osmTile }
         draw:
-            lines:
+            elevate_lns:
                 order: 3
                 color: '#353535'
                 width: 2px
     landuse:
         data: { source: osmTile }
         draw:
-            polygons:
+            elevate_ply:
                 order: 4
                 color: [0.769, 0.769, 0.769]
     roads:
         data: { source: osmTile }
         properties: { width: 3 }
         draw:
-            lines:
+            elevate_lns:
                 order: 5
                 color: [0.639, 0.639, 0.639]
                 width: 10
     buildings:
         data: { source: osmTile }
         draw:
-            polygons:
+            elevate_ply:
                 order: 6
                 color: white
                 extrude: true
     terrain:
         data: { source: terrain }
         draw:
-            polygons:
+            elevate_cls:
                 order: 0
-                color: gray
-            lines:
+                color: black
+            elevate_lns:
                 order: 1
                 color: red
                 width: 1px
