@@ -14,7 +14,7 @@ scene:
         color: white
 cameras:
     camera1:
-        type: isometric
+        type: perspective
 lights:
     directional1:
         type: directional
@@ -80,24 +80,29 @@ styles:
         shaders:
             uniforms:
                 # u_terrain: data/19293-24640-16.png
-                u_terrain: 655-1582-12.png
+                u_terrain: data/655-1582-12.png
                 # u_bbox: [-74.020386, -74.014321, 40.709374, 40.7146]
                 # u_range: [-12, 33]
-                u_bbox: [-122.43164, -122.34375, 37.78808, 37.85751]
+                # u_bbox: [-122.43164, -122.34375, 37.78808, 37.85751]
+                u_bbox: [-13629027.821785385, -13619243.951739565, 4549531.728565961, 4559316.2641026]
                 u_range: [-37, 138]
             blocks:
                 global: |
                     float getColorHeight() {
-                        vec2 worldPos = u_map_position.xy + v_position.xy;
-                        vec2 pos = vec2(x2lon_m(worldPos.x),y2lat_m(worldPos.y));
                         vec2 st = vec2(0.0);
-                        st.x = map(worldPos.x, -122.43164, -122.34375, 0., 1.);
-                        st.y = map(worldPos.y, 37.78808, 37.85751, 0., 1.);
+                        vec2 worldPos = u_map_position.xy + v_position.xy;
+                        //worldPos = vec2(x2lon_m(worldPos.x),y2lat_m(worldPos.y));
+                        //st.x = map(worldPos.x, -122.43164, -122.34375, 0., 1.);
+                        //st.y = map(worldPos.y, 37.78808, 37.85751, 0., 1.);
+
+                        st.x = map(worldPos.x, -13629027.821785385, -13619243.951739565, 0., 1.);
+                        st.y = map(worldPos.y, 4549531.728565961, 4559316.2641026, 0., 1.);
+
                         return texture2D(u_terrain, st).r;
                     }
 
                     float getHeight() {
-                        return map(getColorHeight(), 0., 1., -12., 33.);
+                        return map(getColorHeight(), 0., 1., -37., 138.);
                     }
 
                     mat3 rotateX3D(float phi){
@@ -106,10 +111,17 @@ styles:
                             vec3(0.,cos(phi),-sin(phi)),
                             vec3(0.,sin(phi),cos(phi)));
                     }
+
+                    mat3 rotateZ3D (float psi) {
+                        return mat3(
+                            vec3(cos(psi),-sin(psi),0.),
+                            vec3(sin(psi),cos(psi),0.),
+                            vec3(0.,0.,1.));
+                    }
                 position: |
                     position.z += getHeight();
                     float t = u_time*0.05; 
-                    position.xyz = rotateX3D(abs(sin(t))*0.5) * position.xyz;
+                    position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
     elevate_ply:
         base: polygons
         mix: [geometry-terrain]
@@ -166,6 +178,6 @@ layers:
                 order: 0
                 color: black
             elevate_lns:
-                order: 1
+                order: 4
                 color: red
                 width: 1px

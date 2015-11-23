@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
 from PIL import Image
 
+import shapely.geometry
+import shapely.geometry.polygon 
+
 def getVerticesFromTile(x,y,zoom):
     KEY = "vector-tiles-NumPyGZu-Q"
     r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
@@ -157,15 +160,19 @@ def makeHeighmap(name,size, bbox, height_range, points, heights):
     image.save(name+".png", "PNG")
     image.show()
 
-def segments(poly):
-    """A sequence of (x,y) numeric coordinates pairs """
-    return zip(poly, poly[1:] + [poly[0]])
+def makeGeometry(triangle):
+    poly = []
+    for vertex in triangle:
+        poly.append(tuple(vertex))
 
-def check_clockwise(poly):
-    clockwise = False
-    if (sum(x0*y1 - x1*y0 for ((x0, y0), (x1, y1)) in segments(poly))) < 0:
-        clockwise = not clockwise
-    return clockwise
+    geom = shapely.geometry.Polygon(poly)
+    cw_geom = shapely.geometry.polygon.orient(geom, sign=-1)
+    # return shapely.geometry.mapping(cw_geom)
+    poly = []
+    for vertex in cw_geom.exterior.coords:
+        x, y = vertex
+        poly.append([x, y])
+    return poly
 
 def makeGeoJson(name,triangles):
     geoJSON = {}
@@ -182,16 +189,7 @@ def makeGeoJson(name,triangles):
 
     for tri in triangles:
         if len(tri) == 3:
-            if check_clockwise(tri):
-                element['geometry']['coordinates'].append([ [tri[0][0],tri[0][1]],
-                                                            [tri[1][0],tri[1][1]],
-                                                            [tri[2][0],tri[2][1]],
-                                                            [tri[0][0],tri[0][1]]  ])
-            else:
-                element['geometry']['coordinates'].append([ [tri[0][0],tri[0][1]],
-                                                            [tri[2][0],tri[2][1]],
-                                                            [tri[1][0],tri[1][1]],
-                                                            [tri[0][0],tri[0][1]] ])
+            element['geometry']['coordinates'].append(makeGeometry(tri));
     
     geoJSON['features'].append(element);
 
