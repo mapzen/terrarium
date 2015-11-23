@@ -1,0 +1,77 @@
+﻿# Author @patriciogv - 2015
+
+sources:
+    osmTile:
+        type: GeoJSON
+        url: //vector.mapzen.com/osm/all/16/19293/24640.json
+    terrain:
+        type: GeoJSON
+        url: data/19293-24640-16.json
+scene:
+    background: 
+        color: white
+cameras:
+    camera1:
+        type: isometric
+lights:
+    directional1:
+        type: directional
+        direction: [-1.,-1.,-0.5]
+        ambient: .5
+        diffuse: 1.
+styles:
+    elevate:
+        shaders:
+            uniforms:
+                u_terrain: data/19293-24640-16.png
+                u_bbox: [-74.020386, -74.014321, 40.709374, 40.7146]
+                u_range: [-12, 33]
+            blocks:
+                color:
+                    vec2 worldPos = u_map_position.xy+v_position.xy;
+layers:
+    earth:
+        data: { source: osmTile }
+        draw:
+            polygons:
+                order: 2
+                color: gray
+                width: 2px
+    water:
+        data: { source: osmTile }
+        draw:
+            lines:
+                order: 3
+                color: '#353535'
+                width: 2px
+    landuse:
+        data: { source: osmTile }
+        draw:
+            polygons:
+                order: 4
+                color: [0.769, 0.769, 0.769]
+    roads:
+        data: { source: osmTile }
+        properties: { width: 3 }
+        draw:
+            lines:
+                order: 5
+                color: [0.639, 0.639, 0.639]
+                width: 10
+    buildings:
+        data: { source: osmTile }
+        draw:
+            polygons:
+                order: 6
+                color: white
+                extrude: true
+    terrain:
+        data: { source: terrain }
+        draw:
+            polygons:
+                order: 0
+                color: gray
+            lines:
+                order: 1
+                color: red
+                width: 1px
