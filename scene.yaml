@@ -118,8 +118,8 @@ styles:
                 position: |
                     v_height = getColorHeight(position.xy);
                     position.z += map(v_height, 0., 1., -37., 138.);;
-                    //float t = u_time*0.05; 
-                    //position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
+                    float t = u_time*0.05; 
+                    position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
     elevate_ply:
         base: polygons
         mix: [geometry-terrain]
