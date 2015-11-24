@@ -11,7 +11,7 @@ sources:
         url: data/655-1582-12.json
 scene:
     background: 
-        color: white
+        color: gray
 cameras:
     camera1:
         type: perspective
@@ -88,9 +88,10 @@ styles:
                 u_range: [-37, 138]
             blocks:
                 global: |
-                    float getColorHeight() {
+                    varying float v_height;
+                    float getColorHeight(vec2 position) {
                         vec2 st = vec2(0.0);
-                        vec2 worldPos = u_map_position.xy + v_position.xy;
+                        vec2 worldPos = u_map_position.xy + position;
                         //worldPos = vec2(x2lon_m(worldPos.x),y2lat_m(worldPos.y));
                         //st.x = map(worldPos.x, -122.43164, -122.34375, 0., 1.);
                         //st.y = map(worldPos.y, 37.78808, 37.85751, 0., 1.);
@@ -99,10 +100,6 @@ styles:
                         st.y = map(worldPos.y, 4549531.728565961, 4559316.2641026, 0., 1.);
 
                         return texture2D(u_terrain, st).r;
-                    }
-
-                    float getHeight() {
-                        return map(getColorHeight(), 0., 1., -37., 138.);
                     }
 
                     mat3 rotateX3D(float phi){
@@ -119,9 +116,10 @@ styles:
                             vec3(0.,0.,1.));
                     }
                 position: |
-                    position.z += getHeight();
-                    float t = u_time*0.05; 
-                    position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
+                    v_height = getColorHeight(position.xy);
+                    position.z += map(v_height, 0., 1., -37., 138.);;
+                    //float t = u_time*0.05; 
+                    //position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
     elevate_ply:
         base: polygons
         mix: [geometry-terrain]
@@ -131,7 +129,8 @@ styles:
         shaders:
             blocks:
                 color: |
-                    color.rgb = vec3(getColorHeight());
+                    color.rgb = vec3(v_height);
+                    //color.rgb = vec3(getColorHeight(v_position.xy));
     elevate_lns:
         base: lines
         mix: [geometry-terrain]
@@ -143,13 +142,11 @@ layers:
                 order: 2
                 color: gray
                 width: 2px
-    water:
-        data: { source: osmTile }
-        draw:
             elevate_lns:
                 order: 3
-                color: '#353535'
-                width: 2px
+                color: white
+                width: 1px
+            
     landuse:
         data: { source: osmTile }
         draw:
