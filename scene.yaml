@@ -1,26 +1,123 @@
 ﻿# Author @patriciogv - 2015
 
 sources:
-    osmTile:
-        type: GeoJSON
-        # url: //vector.mapzen.com/osm/all/16/19293/24640.json
-        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.json
+    osm:
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     terrain:
         type: GeoJSON
-        # url: data/19293-24640-16.json
         url: data/655-1582-12.json
 scene:
     background: 
-        color: gray
+        color: '#353535'
 cameras:
     camera1:
         type: perspective
+        vanishing_point: [0, -500]
 lights:
     directional1:
         type: directional
-        direction: [-1.,-1.,-0.5]
+        direction: [.1, .5, -1]
+        diffuse: .7
         ambient: .5
-        diffuse: 1.
+layers:
+    terrain:
+        data: { source: terrain }
+        draw:
+            # elevate_cls:
+            #     order: 0
+            #     color: black
+            # elevate_lns:
+            #     order: 5
+            #     color: red
+            #     width: 1px
+            water:
+                order: 0
+                color: white
+    earth:
+        data: { source: osm }
+        draw:
+            elevate_cls:
+                order: 0
+                color: white
+                width: 1px
+    landuse:
+        data: { source: osm }
+        draw:
+            area:
+                order: 1
+                color: [1.000,0.014,0.187]
+    roads:
+        data: { source: osm, layer: roads }
+        filter: { $zoom: {min: 7}, not: { highway: service, kind: rail } }
+        draw:
+            elevate_lns:
+                order: 0
+                color: [.7,.7,.7]
+                width: [[6,0px], [7,.25px], [10, .5px], [15, .75px], [17, 5m]]
+        highway:
+            filter: { kind: highway }
+            draw:
+                elevate_lns:
+                    order: 1
+                    color: [.8,.8,.8]#[1.000,0.897,0.058]
+                    width: [[1,0px], [6,.25px], [11, 2px], [14, 3px], [16, 4px], [17, 10m]]
+            link:
+                filter: { is_link: yes } # on- and off-ramps, etc
+                draw:
+                    elevate_lns:
+                        color: [.7,.7,.7]#[1.000,0.933,0.710]
+                        width: [[10,0px], [14, 3px], [16, 5px], [18, 10m]]
+                tunnel-link:
+                    filter: {is_tunnel: yes, $zoom: {min: 13} }
+                    draw:
+                        elevate_lns:
+                            color: [.5,.5,.5]#[0.805,0.748,0.557]
+            tunnel:
+                filter: {is_tunnel: yes, $zoom: {min: 13} }
+                draw:
+                    elevate_lns:
+                        order: -1
+                        color: [.5,.5,.5]#[0.805,0.748,0.557]
+        major_road:
+            filter: { kind: major_road }
+            draw:
+                elevate_lns:
+                    color: [[13, [.6,.6,.6]], [17, white]]
+                    width: [[1,0px], [6,.5px], [11,1px], [14, 2px], [16, 2.5px], [19, 8m]]
+                    primary:
+                        filter: { highway: primary }
+                        draw:
+                            elevate_lns:
+                                width: [[1,0px], [6,.5px], [11,1px], [11, 1.5px], [13, 2.5px], [16, 2.5px], [19, 8m]]
+                    secondary:
+                        filter: { highway: secondary }
+                        draw:
+                            elevate_lns:
+                                width: [[1,0px], [6,.5px], [11,1px], [13, 1.5px], [14, 2.5px], [16, 2.5px], [19, 8m]]
+                    tertiary:
+                        filter: { highway: tertiary }
+                        draw:
+                            elevate_lns:
+                                width: [[1,0px], [6,.5px], [11,1px], [13, .75px], [14, 2.5px], [16, 2.5px], [19, 8m]]
+        path:
+            filter: { kind: path }
+            draw:
+                elevate_lns:
+                    color: [0.8, 0.8, 0.8]
+                    width: [[14,.1px],[16,.5px], [17, 2m]]
+        # z-order:
+        #     filter: { $zoom: {min: 14} }
+        #     draw:
+        #         elevate_lns:
+        #             order: function() {return feature.sort_key;}
+    buildings:
+        data: { source: osm }
+        draw:
+            elevate_ply:
+                order: 1
+                color: '#999'
+                extrude: true
 styles:
     functions-map:
         shaders:
@@ -49,77 +146,178 @@ styles:
                     float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax) {
                         return map(value, inputMin, inputMax, outputMin, outputMax, true); 
                     }
-    geometry-projection:
+    functions-aastep:
+        shaders:
+            extensions: OES_standard_derivatives
+            blocks:
+                global: |
+                    // AntiAliased Step function
+                    //=============================
+                    float aastep(float threshold, float value) {
+                        #ifdef TANGRAM_FRAGMENT_SHADER
+                            #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
+                                float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+                                return smoothstep(threshold-afwidth, threshold+afwidth, value);
+                            #else
+                                return step(threshold, value);
+                            #endif  
+                        #else
+                            return step(threshold, value);
+                        #endif
+                    }
+    generative-random:
+        shaders:
+            blocks:
+                global: |
+                    // 1D Random for 1 and 2 dimentions
+                    // ================================
+                    float random(float x){ return fract(sin(x)*43758.5453);}
+                    float random(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
+                    //
+                    // 2D Random for 2 dimentions
+                    // ================================
+                    vec2 random2 (vec2 xy) { return fract(sin(vec2(dot(xy,vec2(127.1,311.7)),dot(xy,vec2(269.5,183.3))))*43758.5453); }
+                    //
+                    // 3D Random for 2 dimentions
+                    // ================================
+                    vec3 random3 (vec2 xy) { return fract(sin(vec3( dot(xy,vec2(127.1,311.7)), dot(xy,vec2(269.5,183.3)), dot(xy,vec2(419.2,371.9)) ))*43758.5453); }
+                    vec3 random3 (vec3 c) {
+                        float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));
+                        vec3 r;
+                        r.z = fract(512.0*j);
+                        j *= .125;
+                        r.x = fract(512.0*j);
+                        j *= .125;
+                        r.y = fract(512.0*j);
+                        return r-0.5;
+                    }
+    generative-noise:
+        mix: generative-random
+        shaders:
+            blocks:
+                global: |
+                    // 1D Value Noise for 1, 2 and 3 dimentions
+                    // ================================
+                    float noise (in float x) {
+                        float i = floor(x);
+                        float f = fract(x);
+                        float u = f * f * (3.0 - 2.0 * f);
+                        return mix(random(i), random(i + 1.0), u);
+                    }
+                    float noise (vec2 xy) {
+                        vec2 i = floor(xy);
+                        vec2 f = fract(xy);
+                        float a = random(i);
+                        float b = random(i + vec2(1.0, 0.0));
+                        float c = random(i + vec2(0.0, 1.0));
+                        float d = random(i + vec2(1.0, 1.0));
+                        vec2 u = f * f * (3.0 - 2.0 * f);
+                        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+                    }
+                    float noise (vec3 xyz) {
+                        const vec3 step = vec3(110.0, 241.0, 171.0);
+                        vec3 i = floor(xyz);
+                        vec3 f = fract(xyz);
+                        float n = dot(i, step);
+                        vec3 u = f * f * (3.0 - 2.0 * f);
+                        return mix( mix(mix(random(n + dot(step, vec3(0,0,0))),
+                                            random(n + dot(step, vec3(1,0,0))),
+                                            u.x),
+                                        mix(random(n + dot(step, vec3(0,1,0))),
+                                            random(n + dot(step, vec3(1,1,0))),
+                                            u.x),
+                                        u.y),
+                                    mix(mix(random(n + dot(step, vec3(0,0,1))),
+                                        random(n + dot(step, vec3(1,0,1))),
+                                        u.x),
+                                        mix(random(n + dot(step, vec3(0,1,1))),
+                                            random(n + dot(step, vec3(1,1,1))),
+                                            u.x),
+                                    u.y),
+                                u.z);
+                    }
+                    //
+                    // Simplex Noise
+                    //
+                    const float F3 =  0.3333333;
+                    const float G3 =  0.1666667;
+                    float snoise (vec3 p) {
+                        vec3 s = floor(p + dot(p, vec3(F3)));
+                        vec3 x = p - s + dot(s, vec3(G3));
+                        vec3 e = step(vec3(0.0), x - x.yzx);
+                        vec3 i1 = e*(1.0 - e.zxy);
+                        vec3 i2 = 1.0 - e.zxy*(1.0 - e);
+                        vec3 x1 = x - i1 + G3;
+                        vec3 x2 = x - i2 + 2.0*G3;
+                        vec3 x3 = x - 1.0 + 3.0*G3;
+                        vec4 w, d;
+                        w.x = dot(x, x);
+                        w.y = dot(x1, x1);
+                        w.z = dot(x2, x2);
+                        w.w = dot(x3, x3);
+                        w = max(0.6 - w, 0.0);
+                        d.x = dot(random3(s), x);
+                        d.y = dot(random3(s + i1), x1);
+                        d.z = dot(random3(s + i2), x2);
+                        d.w = dot(random3(s + 1.0), x3);
+                        w *= w;
+                        w *= w;
+                        d *= w;
+                        return dot(d, vec4(52.0));
+                    }
+    geometry-matrices:
         shaders:
             defines:
-                EARTH_RADIUS: 6378137.0
                 PI: 3.14159265358979323846
-                HALF_PI: 1.570796327
-                QUATER_PI: .785398163
-                deg2rad(d): (((d)*3.14159265358979323846)/180.0)
-                rad2deg(d): (((d)*180.0)/3.14159265358979323846)
             blocks:
                 global: |
-                    //
-                    //    The following functions take or return there results in degrees
-                    //    http://wiki.openstreetmap.org/wiki/Mercator
-                    float y2lat_d (float y) { return rad2deg(2.0*atan(exp(deg2rad(y)))-HALF_PI); }
-                    float x2lon_d (float x) { return x; }
-                    float lat2y_d (float lat) { return rad2deg(log(tan(QUATER_PI+ deg2rad(lat)/2.0))); }
-                    float lon2x_d (float lon) { return lon; }
-                    //
-                    //    The following functions take or return there results in something close to meters, along the equator 
-                    //    http://wiki.openstreetmap.org/wiki/Mercator
-                    float y2lat_m (float y) { return rad2deg(2.0*atan(exp((y/EARTH_RADIUS)))-HALF_PI); }
-                    float x2lon_m (float x) { return rad2deg(x/EARTH_RADIUS); }
-                    float lat2y_m (float lat) { return EARTH_RADIUS*log(tan(QUATER_PI+ deg2rad(lat)/2.0)); }
-                    float lon2x_m (float lon) { return deg2rad(lon)*EARTH_RADIUS; }
-    geometry-terrain:
-        animated: true
-        mix: [functions-map, geometry-projection]
-        shaders:
-            uniforms:
-                # u_terrain: data/19293-24640-16.png
-                u_terrain: data/655-1582-12.png
-                # u_bbox: [-74.020386, -74.014321, 40.709374, 40.7146]
-                # u_range: [-12, 33]
-                # u_bbox: [-122.43164, -122.34375, 37.78808, 37.85751]
-                u_bbox: [-13629027.821785385, -13619243.951739565, 4549531.728565961, 4559316.2641026]
-                u_range: [-37, 138]
-            blocks:
-                global: |
-                    varying float v_height;
-                    float getColorHeight(vec2 position) {
-                        vec2 st = vec2(0.0);
-                        vec2 worldPos = u_map_position.xy + position;
-                        //worldPos = vec2(x2lon_m(worldPos.x),y2lat_m(worldPos.y));
-                        //st.x = map(worldPos.x, -122.43164, -122.34375, 0., 1.);
-                        //st.y = map(worldPos.y, 37.78808, 37.85751, 0., 1.);
-
-                        st.x = map(worldPos.x, -13629027.821785385, -13619243.951739565, 0., 1.);
-                        st.y = map(worldPos.y, 4549531.728565961, 4559316.2641026, 0., 1.);
-
-                        return texture2D(u_terrain, st).r;
+                    mat2 rotate2D (float angle) {
+                        return mat2(cos(angle),-sin(angle),
+                                    sin(angle),cos(angle));
                     }
-
-                    mat3 rotateX3D(float phi){
+                    mat3 rotateX3D (float phi) {
                         return mat3(
                             vec3(1.,0.,0.),
                             vec3(0.,cos(phi),-sin(phi)),
                             vec3(0.,sin(phi),cos(phi)));
                     }
-
+                    mat3 rotateY3D (float theta) {
+                        return mat3(
+                            vec3(cos(theta),0.,-sin(theta)),
+                            vec3(0.,1.,0.),
+                            vec3(sin(theta),0.,cos(theta)));
+                    }
                     mat3 rotateZ3D (float psi) {
                         return mat3(
                             vec3(cos(psi),-sin(psi),0.),
                             vec3(sin(psi),cos(psi),0.),
                             vec3(0.,0.,1.));
                     }
+    geometry-terrain:
+        animated: true
+        mix: [geometry-matrices, functions-map]
+        shaders:
+            uniforms:
+                u_terrain: data/655-1582-12.png
+                u_bbox: [-13629027.821785385, -13619243.951739565, 4549531.728565961, 4559316.2641026]
+                u_range: [-37, 138]
+                u_offset: [0, 0]
+            blocks:
+                global: |
+                    varying float v_height;
+                    float getFloatHeight(vec2 position) {
+                        vec2 st = vec2(0.0);
+                        vec2 worldPos = u_map_position.xy + position;
+
+                        st.x = map(worldPos.x, -13629027.821785385, -13619243.951739565, 0., 1.);
+                        st.y = map(worldPos.y, 4549531.728565961, 4559316.2641026, 0., 1.);
+
+                        return texture2D(u_terrain, st).r;
+                    }
                 position: |
-                    v_height = getColorHeight(position.xy);
+                    v_height = getFloatHeight(position.xy);
                     position.z += map(v_height, 0., 1., -37., 138.);;
-                    float t = u_time*0.05; 
-                    position.xyz = rotateX3D(3.14*abs(cos(t)*.25)) * rotateZ3D(3.14*abs(sin(t)*.25)) * position.xyz;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
     elevate_ply:
         base: polygons
         mix: [geometry-terrain]
@@ -130,51 +328,57 @@ styles:
             blocks:
                 color: |
                     color.rgb = vec3(v_height);
-                    //color.rgb = vec3(getColorHeight(v_position.xy));
     elevate_lns:
         base: lines
         mix: [geometry-terrain]
-layers:
-    earth:
-        data: { source: osmTile }
-        draw:
-            elevate_ply:
-                order: 2
-                color: gray
-                width: 2px
-            elevate_lns:
-                order: 3
-                color: white
-                width: 1px
-            
-    landuse:
-        data: { source: osmTile }
-        draw:
-            elevate_ply:
-                order: 4
-                color: [0.769, 0.769, 0.769]
-    roads:
-        data: { source: osmTile }
-        properties: { width: 3 }
-        draw:
-            elevate_lns:
-                order: 5
-                color: [0.639, 0.639, 0.639]
-                width: 10
-    buildings:
-        data: { source: osmTile }
-        draw:
-            elevate_ply:
-                order: 6
-                color: white
-                extrude: true
-    terrain:
-        data: { source: terrain }
-        draw:
-            elevate_cls:
-                order: 0
-                color: black
-            elevate_lns:
-                order: 4
-                color: red
-                width: 1px
+        shaders:
+            blocks:
+                position: |
+                    position.z -= 10.;
+                    position.z += (1.+sin(u_time*0.5))*200.;
+    water:
+        base: polygons
+        animated: true
+        mix: [generative-noise, geometry-matrices]
+        material:
+            ambient: .7
+            diffuse:
+                texture: ../imgs/sem-sky-0001.jpg
+                mapping: spheremap
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                position: |
+                    position.z -= 10.;
+                    position.z += (1.+sin(u_time*0.5))*200.;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
+                normal: |
+                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
+                filter: |
+                    color.a *= .5;
+    area:
+        base: polygons
+        mix: [geometry-matrices, functions-map, functions-aastep]
+        lighting: false
+        blend: inlay
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                global: |
+                    float stripes(vec2 st, float width){
+                        st = rotate2D(.72)*st;
+                        st *= 92.;
+                        return aastep(.5+width*0.5,abs(sin(st.y*3.14159265358)));
+                    }
+                position: |
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
+                filter: |
+                    vec2 st_center = gl_FragCoord.xy/u_resolution.xy;
+                    float aspect = u_resolution.x/u_resolution.y;
+                    st_center -= .5;
+                    st_center.x *= aspect;
+                    st_center += .5;
+                    float SatOsmPct = pow(1.-map(u_map_position.z,6.,9.,0.,1.),5.0);
+                    color.a = stripes(st_center*2.,SatOsmPct*1.4)*.5;

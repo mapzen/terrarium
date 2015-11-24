@@ -65493,7 +65493,15 @@
             }, 
             "type": "Feature", 
             "properties": {
-                "kind": "terrain"
+                "min_height": -37, 
+                "kind": "terrain", 
+                "bbox_merc": [
+                    -13629027.821785385, 
+                    -13619243.951739565, 
+                    4549531.728565961, 
+                    4559316.2641026
+                ], 
+                "max_height": 138
             }
         }
     ]
