@@ -70,7 +70,7 @@ function init() {
 }
 
 function update(time) {   // time in seconds since Jan. 01, 1970 UTC
-    var speed = .025;
+    var speed = .0125;
 
     if (bMousePressed) {
         speed = .1;

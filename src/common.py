@@ -16,7 +16,7 @@ def getVerticesFromTile(x,y,zoom):
     j = json.loads(r.text)
     p = [] # Array of points
     for layer in j:
-        if layer == 'buildings' or layer == 'roads' or layer == 'water' or layer == 'landuse':
+        if layer == 'roads' or layer == 'water' or layer == 'landuse': # or layer == 'buildings':
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
@@ -253,7 +253,7 @@ def makeTile(lng, lat, zoom):
     # showTriangles(triangles, bbox_latlon)
 
     # Make Heighmap
-    makeHeighmap(name, 500, bbox_merc, heights_range, points_merc, heights)
+    makeHeighmap(name, 256, bbox_merc, heights_range, points_merc, heights)
 
 def makeTiles(_points,_zoom):
     tiles = []

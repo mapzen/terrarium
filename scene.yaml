@@ -49,7 +49,7 @@ layers:
                 color: [1.000,0.014,0.187]
     roads:
         data: { source: osm, layer: roads }
-        filter: { $zoom: {min: 7}, not: { highway: service, kind: rail } }
+        filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
         draw:
             elevate_lns:
                 order: 0
@@ -299,24 +299,34 @@ styles:
         shaders:
             uniforms:
                 u_terrain: data/655-1582-12.png
-                u_bbox: [-13629027.821785385, -13619243.951739565, 4549531.728565961, 4559316.2641026]
                 u_range: [-37, 138]
                 u_offset: [0, 0]
+            defines:
+                    XMIN: -13629027.821785385
+                    XMAX: -13619243.951739565
+                    YMIN: 4549531.728565961
+                    YMAX: 4559316.2641026
+                    ZMIN: -37.0
+                    ZMAX: 138.0
             blocks:
                 global: |
                     varying float v_height;
-                    float getFloatHeight(vec2 position) {
-                        vec2 st = vec2(0.0);
-                        vec2 worldPos = u_map_position.xy + position;
+                    void extrudeTerrain(inout vec4 position, inout float normalize_height) {
+                        vec2 worldPos = u_map_position.xy + position.xy;
 
-                        st.x = map(worldPos.x, -13629027.821785385, -13619243.951739565, 0., 1.);
-                        st.y = map(worldPos.y, 4549531.728565961, 4559316.2641026, 0., 1.);
-
-                        return texture2D(u_terrain, st).r;
+                        if (worldPos.x > XMIN && worldPos.x < XMAX &&
+                            worldPos.y > YMIN && worldPos.y < YMAX ) {
+                            vec2 st = vec2(0.0);
+                            st.x = map(worldPos.x, XMIN, XMAX, 0., 1.);
+                            st.y = map(worldPos.y, YMIN, YMAX, 0., 1.);
+                            normalize_height = texture2D(u_terrain, st).r;
+                            position.z = map(normalize_height, 0., 1., ZMIN, ZMAX);
+                        } else {
+                            normalize_height = .25;
+                        }
                     }
                 position: |
-                    v_height = getFloatHeight(position.xy);
-                    position.z += map(v_height, 0., 1., -37., 138.);;
+                    extrudeTerrain(position, v_height);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
     elevate_ply:
         base: polygons
@@ -331,11 +341,6 @@ styles:
     elevate_lns:
         base: lines
         mix: [geometry-terrain]
-        shaders:
-            blocks:
-                position: |
-                    position.z -= 10.;
-                    position.z += (1.+sin(u_time*0.5))*200.;
     water:
         base: polygons
         animated: true
@@ -350,8 +355,8 @@ styles:
                 u_offset: [0, 0]
             blocks:
                 position: |
-                    position.z -= 10.;
-                    position.z += (1.+sin(u_time*0.5))*200.;
+                    position.z -= 100.;
+                    position.z += (1.+sin(u_time*0.5))*300.;
                     position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
                 normal: |
                     normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
