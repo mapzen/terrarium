@@ -145,13 +145,16 @@ def showTriangles(triangles,bbox):
 def remap(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
-    rightSpan = rightMax - rightMin
+    if (leftSpan != 0): 
+        rightSpan = rightMax - rightMin
 
-    # Convert the left range into a 0-1 range (float)
-    valueScaled = float(value - leftMin) / float(leftSpan)
+        # Convert the left range into a 0-1 range (float)
+        valueScaled = float(value - leftMin) / float(leftSpan)
 
-    # Convert the 0-1 range into a value in the right range.
-    return rightMin + (valueScaled * rightSpan)
+        # Convert the 0-1 range into a value in the right range.
+        return rightMin + (valueScaled * rightSpan)
+    else:
+        return rightMin
 
 def makeHeighmap(name, size, bbox, height_range, points, heights):
     total_samples = len(points)
@@ -240,7 +243,7 @@ def makeTile(lng, lat, zoom):
     if os.path.isfile(data_path+'/'+name+".png") and os.path.isfile(data_path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
-    elif name == '12-655-1584':
+    elif name == '12-655-1584' or name == '14-2615-6329' or name == '14-2616-6329':
         print("Skipping "+ name)
         return
 
