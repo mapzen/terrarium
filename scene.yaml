@@ -320,7 +320,7 @@ styles:
                             st.x = map(worldPos.x, XMIN, XMAX, 0., 1.);
                             st.y = map(worldPos.y, YMIN, YMAX, 0., 1.);
                             normalize_height = texture2D(u_terrain, st).r;
-                            position.z = map(normalize_height, 0., 1., ZMIN, ZMAX);
+                            position.z += map(normalize_height, 0., 1., ZMIN, ZMAX);
                         } else {
                             normalize_height = .25;
                         }

@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 from common import makeTile, makeTiles
 
 OSMID="111968" #sys.argv[1]
-ZOOM=[12]
+ZOOM=[12,13,14,15,16,17]
+
 # if isinstance(sys.argv[2], basestring):
 #     for part in sys.argv[2].split(','):
 #         if '-' in part:

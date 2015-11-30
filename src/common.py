@@ -8,6 +8,7 @@ from PIL import Image
 import shapely.geometry
 import shapely.geometry.polygon 
 
+TILE_SIZE=256;
 data_path = '../data/'
 
 def getVerticesFromTile(x,y,zoom):
@@ -46,7 +47,12 @@ def getHeights(coords):
         JSON['shape'].append(point)
     J = json.dumps(JSON)
     R = requests.post('http://elevation.mapzen.com/height?api_key=%s' % KEY, data=J)
-    return json.loads(R.text)['height']
+    H = json.loads(R.text)['height']
+    if (H):
+        return H
+    else:
+        print("Response from elevation service, have no height",R.text)
+        return []
 
 def getRange(array):
     min = 1000000
@@ -147,7 +153,7 @@ def remap(value, leftMin, leftMax, rightMin, rightMax):
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
 
-def makeHeighmap(name,size, bbox, height_range, points, heights):
+def makeHeighmap(name, size, bbox, height_range, points, heights):
     total_samples = len(points)
     if total_samples != len(heights):
         print("Length don't match")
@@ -157,7 +163,7 @@ def makeHeighmap(name,size, bbox, height_range, points, heights):
     height = bbox[3]-bbox[2]
     aspect = width/height
     
-    image = Image.new("RGB", (int(size), int(size*aspect)))
+    image = Image.new("RGB", (int(size), int(size)))
     putpixel = image.putpixel
     imgx, imgy = image.size
     nx = []
@@ -234,6 +240,9 @@ def makeTile(lng, lat, zoom):
     if os.path.isfile(data_path+'/'+name+".png") and os.path.isfile(data_path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
+    elif name == '12-655-1584':
+        print("Skipping "+ name)
+        return
 
     # Vertices
     points_latlon = getVerticesFromTile(tile[0],tile[1],tile[2])
@@ -253,7 +262,7 @@ def makeTile(lng, lat, zoom):
     # showTriangles(triangles, bbox_latlon)
 
     # Make Heighmap
-    makeHeighmap(name, 256, bbox_merc, heights_range, points_merc, heights)
+    makeHeighmap(name, TILE_SIZE, bbox_merc, heights_range, points_merc, heights)
 
 def makeTiles(_points,_zoom):
     tiles = []
