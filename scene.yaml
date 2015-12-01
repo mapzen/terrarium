@@ -7,6 +7,9 @@ sources:
     terrain:
         type: GeoJSON
         url: data/655-1582-12.json
+    terrain-tiles:
+        type: GeoJSON
+        url: data/{z}-{x}-{y}.json
 scene:
     background: 
         color: '#353535'
@@ -34,6 +37,13 @@ layers:
             water:
                 order: 0
                 color: white
+    # terrain-tiles:
+    #     data: { source: terrain-tiles }
+    #     draw:
+    #         # elevate_lns:
+    #             order: 5
+    #             color: red
+    #             width: 1px
     earth:
         data: { source: osm }
         draw:
