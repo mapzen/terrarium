@@ -27,23 +27,16 @@ layers:
     terrain:
         data: { source: terrain }
         draw:
-            # elevate_cls:
-            #     order: 0
-            #     color: black
-            # elevate_lns:
-            #     order: 5
-            #     color: red
-            #     width: 1px
             water:
                 order: 0
                 color: white
-    # terrain-tiles:
-    #     data: { source: terrain-tiles }
-    #     draw:
-    #         # elevate_lns:
-    #             order: 5
-    #             color: red
-    #             width: 1px
+    terrain-tiles:
+        data: { source: terrain-tiles }
+        draw:
+            elevate_lns:
+                order: 5
+                color: red
+                width: 1px
     earth:
         data: { source: osm }
         draw:
