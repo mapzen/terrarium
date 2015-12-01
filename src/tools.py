@@ -1,3 +1,5 @@
+# Author: Patricio Gonzalez Vivo - 2015 (@patriciogv)
+
 import requests, json, math, os
 import numpy
 import matplotlib

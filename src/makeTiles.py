@@ -4,8 +4,8 @@
 import sys
 from tools import makeTile, makeTiles
 
-osm_id="111968" #sys.argv[1]
-zooms=[12,13,14,15,16,17] #sys.argv[2]
+osm_id = "111968" #sys.argv[1]
+zooms = [12,13,14,15,16,17] #sys.argv[2]
 
 makeTiles(osm_id, zooms)
 # makeTile(655,1582,12)
