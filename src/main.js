@@ -4,6 +4,7 @@ var offset_target = [0, 0, 16];
 var offset = [0,0];
 var timer = 0;
 var waitFor = 180;
+var gui;
 
 // ============================================= INIT 
 // Prepair leafleat and tangram
@@ -41,6 +42,9 @@ map = (function () {
     /***** Render loop *****/
     window.addEventListener('load', function () {
         init();
+
+        // Create dat GUI
+        initGUI();
     });
 
     return map;
@@ -66,6 +70,19 @@ function init() {
 
     map.on('mouseup', function () {
         bMousePressed = false;
+    });
+}
+
+function initGUI () {
+    gui = new dat.GUI({ autoPlace: true, hideable: false, width: 300 });
+
+    gui.domElement.parentNode.style.zIndex = 500; // make sure GUI is on top of map
+    window.gui = gui;
+    
+    gui.water_height = 0;
+    var water_height = gui.add(gui, 'water_height', 0, 300).name("Height");
+    water_height.onChange(function(value) {
+        scene.styles.water.shaders.uniforms.u_water_height = value;
     });
 }
 

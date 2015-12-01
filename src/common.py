@@ -243,7 +243,7 @@ def makeTile(lng, lat, zoom):
     if os.path.isfile(data_path+'/'+name+".png") and os.path.isfile(data_path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
-    elif name == '12-655-1584' or name == '14-2615-6329' or name == '14-2616-6329':
+    elif name == '12-655-1584' or name == '14-2615-6329' or name == '14-2616-6329' or name == '15-5234-12669' or name == '15-5240-12656' or name == '15-5241-12655' or name == '15-5235-12659' or name == '15-5235-12665':
         print("Skipping "+ name)
         return
 
