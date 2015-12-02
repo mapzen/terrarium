@@ -30,26 +30,20 @@ layers:
             water:
                 order: 0
                 color: white
-    terrain-tiles:
-        data: { source: terrain-tiles }
-        draw:
-            elevate_lns:
-                order: 10
-                color: red
-                width: 1px
+    # terrain-tiles:
+    #     data: { source: terrain-tiles }
+    #     draw:
+    #         elevate_lns:
+    #             order: 10
+    #             color: red
+    #             width: 1px
     earth:
         data: { source: osm }
         draw:
             elevate_cls:
                 order: 0
-                color: white
+                color: '#353535'
                 width: 1px
-    # landuse:
-    #     data: { source: osm }
-    #     draw:
-    #         area:
-    #             order: 1
-    #             color: [0.000,0.800,0.187]
     roads:
         data: { source: osm, layer: roads }
         filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
@@ -62,7 +56,7 @@ layers:
             filter: { kind: highway }
             draw:
                 elevate_lns:
-                    order: 1
+                    order: 1.
                     color: [.8,.8,.8]#[1.000,0.897,0.058]
                     width: [[1,0px], [6,.25px], [11, 2px], [14, 3px], [16, 4px], [17, 10m]]
             link:
@@ -109,11 +103,11 @@ layers:
                 elevate_lns:
                     color: [0.8, 0.8, 0.8]
                     width: [[14,.1px],[16,.5px], [17, 2m]]
-        # z-order:
-        #     filter: { $zoom: {min: 14} }
-        #     draw:
-        #         elevate_lns:
-        #             order: function() {return feature.sort_key;}
+        z-order:
+            filter: { $zoom: {min: 14} }
+            draw:
+                elevate_lns:
+                    order: function() {return feature.sort_key;}
     buildings:
         data: { source: osm }
         draw:
@@ -304,6 +298,7 @@ styles:
                 u_terrain: data/655-1582-12.png
                 u_range: [-37, 138]
                 u_offset: [0, 0]
+                u_water_height: 0.
             defines:
                     ZOFFSET: 0
                     XMIN: -13629027.821785385
@@ -312,6 +307,8 @@ styles:
                     YMAX: 4559316.2641026
                     ZMIN: -37.0
                     ZMAX: 138.0
+                    TAU: 6.28318530718
+                    MAX_ITER: 5
             blocks:
                 global: |
                     varying float v_height;
@@ -326,23 +323,53 @@ styles:
                             normalize_height = texture2D(u_terrain, st).r;
                             position.z += map(normalize_height, 0., 1., ZMIN, ZMAX);
                         } else {
-                            normalize_height = .25;
+                            normalize_height = 1.1;
                         }
+                    }
+
+                    // Caustic effect from https://www.shadertoy.com/view/4ljXWh
+                    vec3 caustic(vec2 uv){
+                        vec2 p = mod(uv*TAU, TAU)-250.0;
+                        float time = u_time * .5+23.0;
+
+                        vec2 i = vec2(p);
+                        float c = 1.0;
+                        float inten = .005;
+
+                        for (int n = 0; n < int(MAX_ITER); n++) {
+                            float t = time * (1.0 - (3.5 / float(n+1)));
+                            i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+                            c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+                        }
+                        
+                        c /= float(MAX_ITER);
+                        c = 1.17-pow(c, 1.4);
+                        vec3 color = vec3(pow(abs(c), 8.0));
+                        color = clamp(color + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
+                        color = mix(color, vec3(1.0,1.0,1.0),0.3);
+                        
+                        return color;
                     }
                 position: |
                     position.z += ZOFFSET;
                     extrudeTerrain(position, v_height);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
+                filter: |
+                    if (v_height <= 1. && map(v_height, 0., 1., ZMIN, ZMAX)+v_world_position.z < u_water_height-20.) {
+                        color.rgb += caustic(v_world_position.xy*0.01)*0.2;
+                    }
     elevate_ply:
         base: polygons
         mix: [geometry-terrain]
     elevate_cls:
         base: polygons
         mix: [geometry-terrain]
-        shaders:
-            blocks:
-                color: |
-                    color.rgb = vec3(v_height);
+        # shaders:
+        #     blocks:
+        #         color: |
+        #             if (v_height <= 1.) {
+        #                 color.rgb = vec3(v_height);
+        #             }
     elevate_lns:
         base: lines
         mix: [geometry-terrain]
@@ -353,6 +380,7 @@ styles:
         base: polygons
         animated: true
         mix: [generative-noise, geometry-matrices]
+        blend: inlay
         material:
             ambient: .7
             diffuse:
@@ -370,7 +398,7 @@ styles:
                 normal: |
                     normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
                 filter: |
-                    color.a *= .5;
+                    color.a *= .9;
     area:
         base: polygons
         mix: [geometry-matrices, functions-map, functions-aastep]

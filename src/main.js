@@ -80,17 +80,20 @@ function initGUI () {
     window.gui = gui;
     
     gui.water_height = 0;
-    var water_height = gui.add(gui, 'water_height', 0, 300).name("Water level");
+    var water_height = gui.add(gui, 'water_height', 0, 500).name("Water level");
     water_height.onChange(function(value) {
         scene.styles.water.shaders.uniforms.u_water_height = value;
+        scene.styles.elevate_ply.shaders.uniforms.u_water_height = value;
+        scene.styles.elevate_lns.shaders.uniforms.u_water_height = value;
+        scene.styles.elevate_cls.shaders.uniforms.u_water_height = value;
     });
 
-    gui.wireframe = true;
-    var wireframe = gui.add(gui, 'wireframe', true).name("Wireframe");
-    wireframe.onChange(function(value) {
-        scene.config.layers['terrain-tiles'].visible = value;
-        scene.rebuildGeometry();
-    });
+    // gui.wireframe = true;
+    // var wireframe = gui.add(gui, 'wireframe', true).name("Wireframe");
+    // wireframe.onChange(function(value) {
+    //     scene.config.layers['terrain-tiles'].visible = value;
+    //     scene.rebuildGeometry();
+    // });
 }
 
 function update(time) {   // time in seconds since Jan. 01, 1970 UTC
