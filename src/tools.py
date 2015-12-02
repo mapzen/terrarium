@@ -13,7 +13,6 @@ import shapely.geometry.polygon
 from common import getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
 
 TILE_SIZE = 256
-data_path = '../data/'
 
 def getVerticesFromTile(x,y,zoom):
     KEY = "vector-tiles-NumPyGZu-Q"
@@ -21,7 +20,7 @@ def getVerticesFromTile(x,y,zoom):
     j = json.loads(r.text)
     p = [] # Array of points
     for layer in j:
-        if layer == 'roads' or layer == 'water' or layer == 'landuse': # or layer == 'buildings':
+        if layer == 'roads' or layer == 'water' or layer == 'landuse' or layer == 'buildings':
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
@@ -87,7 +86,7 @@ def getTriangles(P, bbox):
 #     plt.axis(bbox)
 #     plt.show()
 
-def makeHeighmap(name, size, bbox, height_range, points, heights):
+def makeHeighmap(path ,name, size, bbox, height_range, points, heights):
     total_samples = len(points)
     if total_samples != len(heights):
         print("Length don't match")
@@ -122,7 +121,7 @@ def makeHeighmap(name, size, bbox, height_range, points, heights):
                     dmin = d
                     j = i
             putpixel((x, y), (nr[j], ng[j], nb[j]))
-    image.save(data_path+'/'+name+".png", "PNG")
+    image.save(path+'/'+name+".png", "PNG")
 
 def makeGeometry(triangle):
     poly = []
@@ -138,7 +137,7 @@ def makeGeometry(triangle):
         poly.append([x, y])
     return poly
 
-def makeGeoJson(name, triangles, height_range, bbox_merc):
+def makeGeoJson(path, name, triangles, height_range, bbox_merc):
     geoJSON = {}
     geoJSON['type'] = "FeatureCollection";
     geoJSON['features'] = [];
@@ -160,18 +159,18 @@ def makeGeoJson(name, triangles, height_range, bbox_merc):
     
     geoJSON['features'].append(element);
 
-    with open(data_path+'/'+name+'.json', 'w') as outfile:
+    with open(path+'/'+name+'.json', 'w') as outfile:
         outfile.write(json.dumps(geoJSON, outfile, indent=4))
     outfile.close()
 
 # MAKE A GEOJSON AND IMAGE for the TILE X,Y,Z
-def makeTile(lng, lat, zoom):
+def makeTile(path, lng, lat, zoom, doPNGs):
     tile = [int(lng), int(lat), int(zoom)]
 
     print("Making tile",tile)
     name = str(tile[2])+'-'+str(tile[0])+'-'+str(tile[1])
 
-    if os.path.isfile(data_path+'/'+name+".png") and os.path.isfile(data_path+'/'+name+".json"):
+    if os.path.isfile(path+'/'+name+".png") and os.path.isfile(path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
     # elif name == '12-655-1584' or name == '14-2615-6329' or name == '14-2616-6329' or name == '15-5234-12669' or name == '15-5240-12656' or name == '15-5241-12655' or name == '15-5235-12659' or name == '15-5235-12665':
@@ -193,11 +192,12 @@ def makeTile(lng, lat, zoom):
     # Tessellate points
     triangles = getTriangles(points_latlon, bbox_latlon)
     
-    makeGeoJson(name, triangles, heights_range, bbox_merc)
+    makeGeoJson(path, name, triangles, heights_range, bbox_merc)
     # showTriangles(triangles, bbox_latlon)
 
     # Make Heighmap
-    makeHeighmap(name, TILE_SIZE, bbox_merc, heights_range, points_merc, heights)
+    if doPNGs:
+        makeHeighmap(path, name, TILE_SIZE, bbox_merc, heights_range, points_merc, heights)
 
 # Get all the points of a given OSM ID
 def getPointsFor (osmID):
@@ -261,7 +261,7 @@ def getPointsFor (osmID):
 
 
 # Make all the tiles for points
-def makeTilesFor(points, zoom):
+def makeTilesFor(path, points, zoom, doPNGs):
     tiles = []
 
     ## find tile
@@ -332,8 +332,8 @@ def makeTilesFor(points, zoom):
     print "\Makeing %i tiles at zoom level %i" % (len(tiles), zoom)
 
     ## make/empty the tiles folder
-    if not os.path.exists(data_path):
-        os.makedirs(data_path)
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     total = len(tiles)
     if total == 0:
@@ -341,9 +341,9 @@ def makeTilesFor(points, zoom):
         exit()
     count = 0
     for tile in tiles:
-        makeTile(tile['x'],tile['y'],zoom)
+        makeTile(path, tile['x'], tile['y'], zoom, doPNGs)
 
-def makeTiles(osmID, zooms):
+def makeTiles(path, osmID, zooms, doElevation):
     points = getPointsFor(osmID)
     zoom_array = []
 
@@ -364,4 +364,4 @@ def makeTiles(osmID, zooms):
     ## GET TILES for all zoom levels
     ##
     for zoom in zoom_array:
-        makeTilesFor(points,zoom)
+        makeTilesFor(path, points, zoom, doElevation)
