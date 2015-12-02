@@ -4,9 +4,12 @@ sources:
     osm:
         type: TopoJSON
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
-    terrain:
+    # terrain:
+    #     type: GeoJSON
+    #     url: data/655-1582-12.json
+    water:
         type: GeoJSON
-        url: data/655-1582-12.json
+        url: data/N37W123.json
     terrain-tiles:
         type: GeoJSON
         url: data/{z}-{x}-{y}.json
@@ -24,19 +27,12 @@ lights:
         diffuse: .7
         ambient: .5
 layers:
-    terrain:
-        data: { source: terrain }
+    water:
+        data: { source: water }
         draw:
             water:
                 order: 0
                 color: white
-    # terrain-tiles:
-    #     data: { source: terrain-tiles }
-    #     draw:
-    #         elevate_lns:
-    #             order: 10
-    #             color: red
-    #             width: 1px
     earth:
         data: { source: osm }
         draw:
@@ -115,6 +111,13 @@ layers:
                 order: 0
                 color: '#999'
                 extrude: true
+    # terrain-tiles:
+    #     data: { source: terrain-tiles }
+    #     draw:
+    #         elevate_lns:
+    #             order: 10
+    #             color: red
+    #             width: 1px
 styles:
     functions-map:
         shaders:
@@ -295,18 +298,25 @@ styles:
         mix: [geometry-matrices, functions-map]
         shaders:
             uniforms:
-                u_terrain: data/655-1582-12.png
-                u_range: [-37, 138]
+                u_terrain: data/N37W123.png
+                # u_terrain: data/655-1582-12.png
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
                     ZOFFSET: 0
-                    XMIN: -13629027.821785385
-                    XMAX: -13619243.951739565
-                    YMIN: 4549531.728565961
-                    YMAX: 4559316.2641026
-                    ZMIN: -37.0
-                    ZMAX: 138.0
+                    XMIN: -13692328.289900804
+                    XMAX: -13580946.954451224
+                    YMIN: 4439068.068371599
+                    YMAX: 4579465.0539420955
+                    ZMIN: 0.0
+                    ZMAX: 1000.0
+
+                    # XMIN: -13629027.821785385
+                    # XMAX: -13619243.951739565
+                    # YMIN: 4549531.728565961
+                    # YMAX: 4559316.2641026
+                    # ZMIN: -37.0
+                    # ZMAX: 138.0
                     TAU: 6.28318530718
                     MAX_ITER: 5
             blocks:
@@ -364,12 +374,12 @@ styles:
     elevate_cls:
         base: polygons
         mix: [geometry-terrain]
-        # shaders:
-        #     blocks:
-        #         color: |
-        #             if (v_height <= 1.) {
-        #                 color.rgb = vec3(v_height);
-        #             }
+        shaders:
+            blocks:
+                color: |
+                    if (v_height <= 1.) {
+                        color.rgb = vec3(v_height);
+                    }
     elevate_lns:
         base: lines
         mix: [geometry-terrain]

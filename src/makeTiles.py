@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # Author: Patricio Gonzalez Vivo - 2015 (@patriciogv)
-import sys
 from tools import makeTile, makeTiles
 
 osm_id = "111968" #sys.argv[1]
