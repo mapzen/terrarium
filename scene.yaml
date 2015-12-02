@@ -34,7 +34,7 @@ layers:
         data: { source: terrain-tiles }
         draw:
             elevate_lns:
-                order: 5
+                order: 10
                 color: red
                 width: 1px
     earth:

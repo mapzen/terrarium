@@ -80,9 +80,16 @@ function initGUI () {
     window.gui = gui;
     
     gui.water_height = 0;
-    var water_height = gui.add(gui, 'water_height', 0, 300).name("Height");
+    var water_height = gui.add(gui, 'water_height', 0, 300).name("Water level");
     water_height.onChange(function(value) {
         scene.styles.water.shaders.uniforms.u_water_height = value;
+    });
+
+    gui.wireframe = true;
+    var wireframe = gui.add(gui, 'wireframe', true).name("Wireframe");
+    wireframe.onChange(function(value) {
+        scene.config.layers['terrain-tiles'].visible = value;
+        scene.rebuildGeometry();
     });
 }
 
