@@ -361,6 +361,9 @@ styles:
         shaders:
             defines:
                     ZOFFSET: 0
+            blocks:
+                color: |
+                    color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
     elevate_lns:
         base: lines
         mix: [geometry-terrain]
