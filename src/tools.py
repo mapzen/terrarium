@@ -13,7 +13,7 @@ from common import getArray, getRange, getBoundingBox, degToMeters, tileForMeter
 TILE_SIZE = 256
 
 def getVerticesFromTile(x,y,zoom):
-    KEY = "vector-tiles-NumPyGZu-Q"
+    KEY = "vector-tiles-NPGZu-Q"
     r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
     j = json.loads(r.text)
     p = [] # Array of points
@@ -104,7 +104,7 @@ def makeHeighmap(path ,name, size, bbox, height_range, points, heights):
             putpixel((x, y), (nr[j], ng[j], nb[j]))
     image.save(path+'/'+name+".png", "PNG")
 
-def makeGeometry(triangle):
+def getPolygon(triangle):
     poly = []
     for vertex in triangle:
         poly.append(tuple(vertex))
@@ -126,7 +126,7 @@ def makeGeoJson(path, name, triangles, height_range, bbox_merc):
     element = {}
     element['type'] = "Feature"
     element['geometry'] = {}
-    element['geometry']['type'] = "Polygon"
+    element['geometry']['type'] = "MultiPolygon"
     element['geometry']['coordinates'] = []
     element['properties'] = {}
     element['properties']['kind'] = "terrain"
@@ -136,8 +136,8 @@ def makeGeoJson(path, name, triangles, height_range, bbox_merc):
     element['properties']['bbox_merc'] = bbox_merc
 
     for tri in triangles:
-        if len(tri) == 3:
-            element['geometry']['coordinates'].append(makeGeometry(tri));
+        # if len(tri) == 3:
+        element['geometry']['coordinates'].append([getPolygon(tri)]);
     
     geoJSON['features'].append(element);
 
@@ -248,7 +248,7 @@ def makeTilesFor(path, points, zoom, doPNGs):
 
     ## find tile
     for point in points:
-        tiles.append(tileForMeters(degToMeters({'x':point['x'],'y':point['y']}), zoom))
+        tiles.append(tileForMeters( degToMeters( {'x':point['x'],'y':point['y']} ), zoom))
 
     ## de-dupe
     tiles = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in tiles)]

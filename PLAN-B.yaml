@@ -4,12 +4,9 @@ sources:
     osm:
         type: TopoJSON
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
-    water:
-        type: GeoJSON
-        url: data/A/N37W123.json
     terrain:
         type: GeoJSON
-        url: data/A/{z}-{x}-{y}.json
+        url: data/B/12-655-1582.json
 scene:
     background: 
         color: '#353535'
@@ -25,7 +22,7 @@ lights:
         ambient: .5
 layers:
     water:
-        data: { source: water }
+        data: { source: terrain, filter: { kind: terrain} }
         draw:
             water:
                 order: 0
@@ -33,7 +30,7 @@ layers:
     earth:
         data: { source: osm }
         draw:
-            elevate_ply:
+            elevate_cls:
                 order: 0
                 color: '#353535'
                 width: 1px
@@ -109,13 +106,13 @@ layers:
             elevate_cls:
                 order: 0
                 color: '#353535'
-    wireframe:
-        data: { source: terrain, filter: { kind: terrain } }
-        draw:
-            elevate_lns:
-                order: 0
-                color: red
-                width: 1.px
+    # wireframe:
+    #     data: { source: terrain, filter: { kind: terrain } }
+    #     draw:
+    #         elevate_lns:
+    #             order: 0
+    #             color: red
+    #             width: 1px
 styles:
     functions-map:
         shaders:
@@ -357,17 +354,17 @@ styles:
         mix: [generative-caustic, geometry-matrices, functions-map, filter-grain]
         shaders:
             uniforms:
-                u_terrain: data/A/N37W123.png
+                u_terrain: data/B/12-655-1582.png
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
-                ZOFFSET: 0
-                XMIN: -13692328.289900804
-                XMAX: -13580946.954451224
-                YMIN: 4439068.068371599
-                YMAX: 4579465.0539420955
-                ZMIN: -10.0
-                ZMAX: 300.0
+                    ZOFFSET: 0
+                    XMIN: -13629027.821785385
+                    XMAX: -13619243.951739565
+                    YMIN: 4549531.728565961
+                    YMAX: 4559316.2641026
+                    ZMIN: -37.0
+                    ZMAX: 138.0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
@@ -403,7 +400,7 @@ styles:
                         }
                     }
                 position: |
-                    position.z += ZOFFSET;
+                    position.z += ZOFFSET*u_meters_per_pixel;
                     v_orig_pos = position.xyz;
                     extrudeTerrain(position, v_height);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
@@ -428,7 +425,7 @@ styles:
         mix: [geometry-terrain]
         shaders:
             defines:
-                    ZOFFSET: .1
+                    ZOFFSET: 1
     elevate_cls:
         base: polygons
         mix: [geometry-terrain]
