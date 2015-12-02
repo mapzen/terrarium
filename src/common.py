@@ -2,6 +2,23 @@ import math
 
 half_circumference_meters = 20037508.342789244;
 
+def getArray(data):
+    array = []
+    if isinstance(data, basestring):
+        for part in data.split(','):
+            if '-' in part:
+                a, b = part.split('-')
+                a, b = int(a), int(b)
+                array.extend(range(a, b + 1))
+            else:
+                a = int(part)
+                array.append(a)
+    elif isinstance(data, list):
+        array = data
+    else:
+        array = [int(data)]
+    return array
+
 def getRange(array):
     min = 1000000
     max = -1000000

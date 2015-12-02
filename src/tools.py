@@ -1,16 +1,14 @@
 # Author: Patricio Gonzalez Vivo - 2015 (@patriciogv)
 
-import requests, json, math, os
+import requests, json, math, os, sys
 import numpy
-import matplotlib
-import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
 from PIL import Image
 import xml.etree.ElementTree as ET
 import shapely.geometry
 import shapely.geometry.polygon 
 
-from common import getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
+from common import getArray, getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
 
 TILE_SIZE = 256
 
@@ -20,7 +18,7 @@ def getVerticesFromTile(x,y,zoom):
     j = json.loads(r.text)
     p = [] # Array of points
     for layer in j:
-        if layer == 'roads' or layer == 'water' or layer == 'landuse' or layer == 'buildings':
+        if layer == 'roads' or layer == 'water' or layer == 'landuse': # or layer == 'buildings':
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
@@ -58,7 +56,7 @@ def getHeights(coords):
         return []
 
 def getTriangles(P, bbox):
-    normal = [-1000,1000,-1000,1000]
+    normal = [-10000,10000,-10000,10000]
     points = remapPoints(P, bbox, normal)
     delauny = Delaunay(points)
     normalize_tri = delauny.points[delauny.vertices]
@@ -68,23 +66,6 @@ def getTriangles(P, bbox):
         if len(triangle) == 3:
             triangles.append(remapPoints(triangle, normal, bbox));
     return triangles
-
-# def showTriangles(triangles, bbox):
-#     fig = plt.figure(figsize=(4.5,4.5))
-#     axes = plt.subplot(1,1,1)
-
-#     # Triangle vertices
-#     A = triangles[:, 0]
-#     B = triangles[:, 1]
-#     C = triangles[:, 2]
-#     lines = []
-#     lines.extend(zip(A, B))
-#     lines.extend(zip(B, C))
-#     lines.extend(zip(C, A))
-#     lines = matplotlib.collections.LineCollection(lines, color='r')
-#     plt.gca().add_collection(lines)
-#     plt.axis(bbox)
-#     plt.show()
 
 def makeHeighmap(path ,name, size, bbox, height_range, points, heights):
     total_samples = len(points)
@@ -149,8 +130,9 @@ def makeGeoJson(path, name, triangles, height_range, bbox_merc):
     element['geometry']['coordinates'] = []
     element['properties'] = {}
     element['properties']['kind'] = "terrain"
-    element['properties']['min_height'] = height_range[0]
-    element['properties']['max_height'] = height_range[1]
+    if (len(height_range) > 1):
+        element['properties']['min_height'] = height_range[0]
+        element['properties']['max_height'] = height_range[1]
     element['properties']['bbox_merc'] = bbox_merc
 
     for tri in triangles:
@@ -167,15 +149,12 @@ def makeGeoJson(path, name, triangles, height_range, bbox_merc):
 def makeTile(path, lng, lat, zoom, doPNGs):
     tile = [int(lng), int(lat), int(zoom)]
 
-    print("Making tile",tile)
+    print(" Zoom " + str(zoom) + " tile ", tile)
     name = str(tile[2])+'-'+str(tile[0])+'-'+str(tile[1])
 
     if os.path.isfile(path+'/'+name+".png") and os.path.isfile(path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
-    # elif name == '12-655-1584' or name == '14-2615-6329' or name == '14-2616-6329' or name == '15-5234-12669' or name == '15-5240-12656' or name == '15-5241-12655' or name == '15-5235-12659' or name == '15-5235-12665':
-        # print("Skipping "+ name)
-        # return
 
     # Vertices
     points_latlon = getVerticesFromTile(tile[0],tile[1],tile[2])
@@ -186,8 +165,11 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     bbox_merc = getBoundingBox(points_merc)
 
     # Elevation
-    heights = getHeights(points_latlon)
-    heights_range = getRange(heights)
+    heights = []
+    heights_range = []
+    if doPNGs:
+        heights = getHeights(points_latlon)
+        heights_range = getRange(heights)
 
     # Tessellate points
     triangles = getTriangles(points_latlon, bbox_latlon)
@@ -288,7 +270,6 @@ def makeTilesFor(path, points, zoom, doPNGs):
     # print miny, minx, maxy, maxx
 
     newtiles = []
-
     for tile in tiles:
         # find furthest tiles from this tile on x and y axes
         x = tile['x']
@@ -340,28 +321,19 @@ def makeTilesFor(path, points, zoom, doPNGs):
         print("Error: no tiles")
         exit()
     count = 0
+    sys.stdout.write("\r%d%%" % (float(count)/float(total)*100.))
+    sys.stdout.flush()
     for tile in tiles:
         makeTile(path, tile['x'], tile['y'], zoom, doPNGs)
+        count += 1
+        sys.stdout.write("\r%d%%" % (float(count)/float(total)*100.))
+        sys.stdout.flush()
 
-def makeTiles(path, osmID, zooms, doElevation):
+def makeTiles(path, osmID, zooms):
     points = getPointsFor(osmID)
-    zoom_array = []
+    zoom_array = getArray(zooms)
 
-    if isinstance(zooms, basestring):
-        for part in zooms.split(','):
-            if '-' in part:
-                a, b = part.split('-')
-                a, b = int(a), int(b)
-                zoom_array.extend(range(a, b + 1))
-            else:
-                a = int(part)
-                zoom_array.append(a)
-    elif isinstance(zooms, list):
-        zoom_array = zooms
-    else:
-        zoom_array = [int(zooms)]
-        
     ## GET TILES for all zoom levels
     ##
     for zoom in zoom_array:
-        makeTilesFor(path, points, zoom, doElevation)
+        makeTilesFor(path, points, zoom, True)

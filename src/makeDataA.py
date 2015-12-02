@@ -5,18 +5,18 @@
 # and making it easy to use in this project http://dwtkns.com/srtm30m/
 
 import json
-from common import getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
-from tools import makeTiles
+from common import getArray, getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
+from tools import getPointsFor, makeTilesFor
 
-data_path = '../data/A'
-ID = 'N37W123'
+DATA_PATH = '../data/A'
+ID = 'N37W123' #sys.argv[1]
+ZOOMS = "3-17" #sys.argv[2]
 USGS_URL = "http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/"
-USGS_BBOX_PATH = data_path+"/srtm30m_bounding_boxes.json"
+USGS_BBOX_PATH = DATA_PATH+"/srtm30m_bounding_boxes.json"
 
 with open(USGS_BBOX_PATH) as data_file:    
     data = json.load(data_file)
 
-points = []
 for layer in data['features']:
     if (layer['properties']['dataFile'].startswith(ID) ):
         points_latlon = layer['geometry']['coordinates'][0]
@@ -41,12 +41,21 @@ element['geometry']['coordinates'].append(points_latlon)
 
 geoJSON['features'].append(element);
 
-with open(data_path+'/'+ID+'.json', 'w') as outfile:
+with open(DATA_PATH+'/'+ID+'.json', 'w') as outfile:
     outfile.write(json.dumps(geoJSON, outfile, indent=4))
 outfile.close()
 
-osm_id = "111968" #sys.argv[1]
-zooms = "3-17" #sys.argv[2]
+zoom_array = getArray(ZOOMS)
 
-makeTiles(data_path, osm_id, zooms, False)
-# makeTile(655,1582,12)
+## MAKE TILES for all zoom levels
+##
+
+points = getPointsFor("111968")
+
+# Make get tiles inside a polygon
+# points = []
+# for point in points_latlon:
+# 	points.append({'x':point[0],'y':point[1]})
+
+for zoom in zoom_array:
+    makeTilesFor(DATA_PATH, points, zoom, False)

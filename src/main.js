@@ -42,9 +42,6 @@ map = (function () {
     /***** Render loop *****/
     window.addEventListener('load', function () {
         init();
-
-        // Create dat GUI
-        initGUI();
     });
 
     return map;
@@ -53,6 +50,8 @@ map = (function () {
 function init() {
     layer.on('init', function() {    
         window.setInterval("update(getCurrentTime())", 100);
+        // Create dat GUI
+        initGUI();
     });
     layer.addTo(map);
 
@@ -88,12 +87,15 @@ function initGUI () {
         scene.styles.elevate_cls.shaders.uniforms.u_water_height = value;
     });
 
-    // gui.wireframe = true;
-    // var wireframe = gui.add(gui, 'wireframe', true).name("Wireframe");
-    // wireframe.onChange(function(value) {
-    //     scene.config.layers['terrain-tiles'].visible = value;
-    //     scene.rebuildGeometry();
-    // });
+    var layer_controls = {};
+    Object.keys(scene.config.layers).forEach(function(l) {
+        layer_controls[l] = !(scene.config.layers[l].visible == false);
+        gui.add(layer_controls, l).
+            onChange(function(value) {
+                scene.config.layers[l].visible = value;
+                scene.rebuildGeometry();
+            });
+    });
 }
 
 function update(time) {   // time in seconds since Jan. 01, 1970 UTC
@@ -137,7 +139,7 @@ function getCurrentTime() {   // time in seconds since Jan. 01, 1970 UTC
 function onMouseUpdate (e) {
     if (!bMousePressed) {
         offset_target[0] = e.pageX/screen.width;
-        offset_target[1] = e.pageY/screen.height;
+        offset_target[1] = 1-(e.pageY/screen.height);
     }
     timer = waitFor;
 }
