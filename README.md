@@ -97,7 +97,7 @@ The creation of the necessary tiles could be done running the script
 
 ```bash
 cd data
-./makeATiles.py
+python makeATiles.py
 ```
 
 Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
