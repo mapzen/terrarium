@@ -123,6 +123,8 @@ In order to solve the incongruence on building extrusion I thought will be benef
 
 ![voronoi](imgs/02-voronoi.png)
 
+The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. On the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest with out distorting the roof elevation from the original.
+
 ## Requirements
 
 - Install PyProj
