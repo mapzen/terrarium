@@ -106,41 +106,14 @@ layers:
             elevate_cls:
                 order: 0
                 color: '#353535'
-    # wireframe:
-    #     data: { source: terrain, filter: { kind: terrain } }
-    #     draw:
-    #         elevate_lns:
-    #             order: 0
-    #             color: red
-    #             width: 1px
+    wireframe:
+        data: { source: terrain, filter: { kind: terrain } }
+        draw:
+            elevate_lns:
+                order: 0
+                color: red
+                width: 1px
 styles:
-    functions-map:
-        shaders:
-            defines:
-                EPSILON: 0.0000001
-            blocks:
-                global: |
-                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax, bool clamp) {
-                        if (abs(inputMin - inputMax) < EPSILON){
-                            return outputMin;
-                        } else {
-                            float outVal = ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
-                        
-                            if( clamp ){
-                                if(outputMax < outputMin){
-                                    if( outVal < outputMax ) outVal = outputMax;
-                                    else if( outVal > outputMin ) outVal = outputMin;
-                                }else{
-                                    if( outVal > outputMax ) outVal = outputMax;
-                                    else if( outVal < outputMin ) outVal = outputMin;
-                                }
-                            }
-                            return outVal;
-                        }
-                    }
-                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax) {
-                        return map(value, inputMin, inputMax, outputMin, outputMax, true); 
-                    }
     generative-random:
         shaders:
             blocks:
@@ -351,7 +324,7 @@ styles:
                     }
     geometry-terrain:
         animated: true
-        mix: [generative-caustic, geometry-matrices, functions-map, filter-grain]
+        mix: [generative-caustic, geometry-matrices, filter-grain]
         shaders:
             uniforms:
                 u_terrain: data/B/12-655-1582.png
@@ -368,47 +341,41 @@ styles:
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
-                    varying float v_height;
 
                     bool inZone(vec2 _worldPos) {
                         return  _worldPos.x > XMIN && _worldPos.x < XMAX &&
                                 _worldPos.y > YMIN && _worldPos.y < YMAX;
                     }
 
-                    void extrudeTerrain(inout vec4 position, inout float normalize_height) {
-                        vec2 worldPos = u_map_position.xy + position.xy;
-                        if (inZone(worldPos.xy)) {
-                            vec2 st = vec2(0.0);
-                            st.x = map(worldPos.x, XMIN, XMAX, 0., 1.);
-                            st.y = map(worldPos.y, YMIN, YMAX, 0., 1.);
-                            normalize_height = texture2D(u_terrain, st).r;
-                            position.z += map(normalize_height, 0., 1., ZMIN, ZMAX);
-                        } else {
-                            normalize_height = 1.1;
-                        }
-                    }
-
                     float getNormalHeight(vec2 position) {
                         vec2 worldPos = u_map_position.xy + position.xy;
                         if (inZone(worldPos)) {
                             vec2 st = vec2(0.0);
-                            st.x = map(worldPos.x, XMIN, XMAX, 0., 1.);
-                            st.y = map(worldPos.y, YMIN, YMAX, 0., 1.);
+                            st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
+                            st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
                             return texture2D(u_terrain, st).r;
                         } else {
                             return 1.1;
                         }
                     }
+
+                    void extrudeTerrain(inout vec4 position) {
+                        vec2 pos = position.xy;
+                        float height = getNormalHeight(pos.xy);
+                        if (height <= 1.0) {
+                            position.z += ZMIN+height*(ZMAX-ZMIN);
+                        }
+                    }
                 position: |
                     position.z += ZOFFSET*u_meters_per_pixel;
                     v_orig_pos = position.xyz;
-                    extrudeTerrain(position, v_height);
+                    extrudeTerrain(position);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 color: |
                     float height = getNormalHeight(v_orig_pos.xy);
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
                 filter: |
-                    if (inZone(wordPos) && map(height, 0., 1., ZMIN, ZMAX)+worldPosition().z < u_water_height) {
+                    if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
                     }
     elevate_ply:

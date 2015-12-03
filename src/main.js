@@ -79,7 +79,7 @@ function initGUI () {
     window.gui = gui;
     
     gui.water_height = 0;
-    var water_height = gui.add(gui, 'water_height', 0, 300).name("Water level");
+    var water_height = gui.add(gui, 'water_height', -20, 300).name("Water level");
     water_height.onChange(function(value) {
         scene.styles.water.shaders.uniforms.u_water_height = value;
         scene.styles.elevate_ply.shaders.uniforms.u_water_height = value;
