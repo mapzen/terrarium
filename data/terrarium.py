@@ -20,7 +20,7 @@ def getPointsFromTile(x, y, zoom, layers):
     j = json.loads(r.text)
     p = [] # Array of points
     for layer in j:
-        if layer in layers: # or layer == 'buildings':
+        if layer in layers:
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
@@ -38,6 +38,35 @@ def getPointsFromTile(x, y, zoom, layers):
                                     p.extend(shapes)
                                     
     return p
+
+def getPointsAndGroupsFromTile(x, y, zoom, layers):
+    KEY = "vector-tiles-NPGZu-Q"
+    r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
+    j = json.loads(r.text)
+    p = [] # Array of points
+    g = [] # Group of vertices with forced height (buildings)
+    for layer in j:
+        if layer in layers:
+            for features in j[layer]:
+                if features == 'features':
+                    for feature in j[layer][features]:
+                        if feature['geometry']['type'] == 'LineString':
+                            p.extend(feature['geometry']['coordinates'])                                
+                        elif feature['geometry']['type'] == 'Polygon':
+                            for shapes in feature['geometry']['coordinates']:
+                                if layer == 'buildings':
+                                    g.append([len(p),len(shapes)])
+                                p.extend(shapes)
+                        elif feature['geometry']['type'] == 'MultiLineString':
+                            for shapes in feature['geometry']['coordinates']:
+                                p.extend(shapes)
+                        elif feature['geometry']['type'] == 'MultiPolygon':
+                            for polygon in feature['geometry']['coordinates']:
+                                for shapes in polygon:
+                                    if layer == 'buildings':
+                                        g.append([len(p),len(shapes)])
+                                    p.extend(shapes)
+    return p, g
 
 # Given set of points (in spherical mercator) fetch their elevation using Mapzen's Elevation Service
 def getElevationFromPoints(points_merc):
@@ -194,7 +223,11 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     layers = ['roads', 'water', 'landuse']
     if doPNGs:
         layers.append('buildings');
-    points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
+        print layers
+        points_latlon, group = getPointsAndGroupsFromTile(tile[0], tile[1], tile[2], layers)
+        print group
+    else:
+        points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
     points_merc = toMercator(points_latlon)
 
     # Elevation
