@@ -2,12 +2,25 @@
 
 ## Process
 
-### Plan A: One Image to rule them all 
+### A Approach: One big image to rule them all 
+
+My first approach was to download a heightmap from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/) and simply project the vertices on the vertex shader.
+
+![Tile N37W123](imgs/00-heighmap.png)
+
+Once I download the tile from [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/) I transforme it to:
+
+```
+wget http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/N37W123.SRTMGL1.hgt.zip
+
+gdal_translate -ot Int16 -of PNG infile.hgt outfile.png
+```
+
+The first approach was to 
 
 Data Source:
 
-* [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) fascilitaded by [this project](http://dwtkns.com/srtm30m/) of [Derek Watkins](https://twitter.com/dwtkns)
-
+* 
 * [OpenStreetMap](http://www.openstreetmap.org/)
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)

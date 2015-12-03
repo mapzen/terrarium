@@ -367,7 +367,7 @@ styles:
                 YMIN: 4439068.068371599
                 YMAX: 4579465.0539420955
                 ZMIN: -10.0
-                ZMAX: 300.0
+                ZMAX: 900.0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
