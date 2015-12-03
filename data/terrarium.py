@@ -72,8 +72,8 @@ def getTrianglesFromPoints(P):
     points = remapPoints(P, bbox, normal)
 
     # Perform a Delaunay tessellation
-    if len(points) == 0:
-        print("No points... no triangles")
+    if len(points) < 3:
+        print("Not enought points... no triangles")
         return []
     delauny = Delaunay(points)
     normalize_tri = delauny.points[delauny.vertices]
