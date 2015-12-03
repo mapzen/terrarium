@@ -4,14 +4,17 @@
 from terrarium import getPointsOfID, makeTile, makeTilesOfPoints
 form common import getStringRangeToArray
 
+# TODO:
+# 	- Use arguments
+
 DATA_PATH = '../data/B'
 OSM_ID = "111968" #sys.argv[1]
 ZOOMS = "3-17" #sys.argv[2]
 
-# makeTile(655,1582,12)
+makeTile(655,1582,12)
 
-points = getPointsOfID(OSM_ID)
-zoom_array = getStringRangeToArray(ZOOMS)
+# points = getPointsOfID(OSM_ID)
+# zoom_array = getStringRangeToArray(ZOOMS)
 
-for zoom in zoom_array:
-    makeTilesOfPoints(path, points, zoom, True)
+# for zoom in zoom_array:
+#     makeTilesOfPoints(path, points, zoom, True)

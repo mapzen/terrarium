@@ -10,6 +10,10 @@ from tile import toMercator
 from terrarium import getPointsOfID, makeTilesOfPoints
 
 DATA_PATH = '../data/A'
+
+# TODO:
+# 	- Use arguments
+
 ID = 'N37W123' #sys.argv[1]
 ZOOMS = "3-17" #sys.argv[2]
 USGS_URL = "http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/"
