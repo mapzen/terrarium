@@ -28,6 +28,8 @@ def getPointsFromTile(x, y, zoom, layers):
                             p.extend(feature['geometry']['coordinates'])                                
                         elif feature['geometry']['type'] == 'Polygon':
                             for shapes in feature['geometry']['coordinates']:
+                                #  TODO:
+                                #       - drop the extra vertex
                                 p.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiLineString':
                             for shapes in feature['geometry']['coordinates']:
@@ -35,6 +37,8 @@ def getPointsFromTile(x, y, zoom, layers):
                         elif feature['geometry']['type'] == 'MultiPolygon':
                             for polygon in feature['geometry']['coordinates']:
                                 for shapes in polygon:
+                                    #  TODO:
+                                    #       - drop the extra vertex
                                     p.extend(shapes)
                                     
     return p
@@ -54,6 +58,8 @@ def getPointsAndGroupsFromTile(x, y, zoom, layers):
                             p.extend(feature['geometry']['coordinates'])                                
                         elif feature['geometry']['type'] == 'Polygon':
                             for shapes in feature['geometry']['coordinates']:
+                                #  TODO:
+                                #       - drop the extra vertex
                                 if layer == 'buildings':
                                     g.append([len(p),len(shapes)])
                                 p.extend(shapes)
@@ -62,6 +68,8 @@ def getPointsAndGroupsFromTile(x, y, zoom, layers):
                                 p.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiPolygon':
                             for polygon in feature['geometry']['coordinates']:
+                                #  TODO:
+                                #       - drop the extra vertex
                                 for shapes in polygon:
                                     if layer == 'buildings':
                                         g.append([len(p),len(shapes)])
@@ -225,7 +233,6 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         layers.append('buildings');
         print layers
         points_latlon, group = getPointsAndGroupsFromTile(tile[0], tile[1], tile[2], layers)
-        print group
     else:
         points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
     points_merc = toMercator(points_latlon)
