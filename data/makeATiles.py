@@ -5,8 +5,9 @@
 # and making it easy to use in this project http://dwtkns.com/srtm30m/
 
 import json
-from common import getArray, getRange, getBoundingBox, degToMeters, tileForMeters, toMercator, remap, remapPoints
-from tools import getPointsFor, makeTilesFor
+from common import getStringRangeToArray, getBoundingBox
+from tile import toMercator
+from terrarium import getPointsOfID, makeTilesOfPoints
 
 DATA_PATH = '../data/A'
 ID = 'N37W123' #sys.argv[1]
@@ -45,17 +46,13 @@ with open(DATA_PATH+'/'+ID+'.json', 'w') as outfile:
     outfile.write(json.dumps(geoJSON, outfile, indent=4))
 outfile.close()
 
-zoom_array = getArray(ZOOMS)
+zoom_array = getStringRangeToArray(ZOOMS)
 
 ## MAKE TILES for all zoom levels
 ##
 
-points = getPointsFor("111968")
-
-# Make get tiles inside a polygon
-# points = []
-# for point in points_latlon:
-# 	points.append({'x':point[0],'y':point[1]})
+points = points_latlon;
+# points = getPointsOfID("111968")
 
 for zoom in zoom_array:
-    makeTilesFor(DATA_PATH, points, zoom, False)
+    makeTilesOfPoints(DATA_PATH, points, zoom, False)

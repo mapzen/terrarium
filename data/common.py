@@ -1,8 +1,6 @@
 import math
 
-half_circumference_meters = 20037508.342789244;
-
-def getArray(data):
+def getStringRangeToArray(data):
     array = []
     if isinstance(data, basestring):
         for part in data.split(','):
@@ -32,57 +30,16 @@ def getRange(array):
 def getBoundingBox(P):
     min_x = min_y = 9999999999.0
     max_x = max_y = -9999999999.0
-    for x,y in P:
-        if x < min_x:
-            min_x = x
-        if x > max_x:
-            max_x = x
-        if y < min_y:
-            min_y = y
-        if y > max_y:
-            max_y = y
+    for point in P:
+        if point[0] < min_x:
+            min_x = point[0]
+        if point[0] > max_x:
+            max_x = point[0]
+        if point[1] < min_y:
+            min_y = point[1]
+        if point[1] > max_y:
+            max_y = point[1]
     return [min_x, max_x, min_y, max_y]
-
-# Convert lat-lng to mercator meters
-def latLngToMeters(coord):
-    y = float(coord[1]) # Lon
-    x = float(coord[0]) # Lat
-    # Latitude
-    y = math.log(math.tan(y*math.pi/360 + math.pi/4)) / math.pi
-    y *= half_circumference_meters
-
-    # Longitude
-    x *= half_circumference_meters/180;
-    return [x,y]
-
-# Convert lat-lng to mercator meters
-def degToMeters( coords ):
-    y = float(coords['y'])
-    x = float(coords['x'])
-    # Latitude
-    y = math.log(math.tan(y*math.pi/360 + math.pi/4)) / math.pi
-    y *= half_circumference_meters
-
-    # Longitude
-    x *= half_circumference_meters / 180;
-
-    return {"x": x, "y": y}
-
-# Given a point in mercator meters and a zoom level, return the tile X/Y/Z that the point lies in
-def tileForMeters(coords, zoom):
-    y = float(coords['y'])
-    x = float(coords['x'])
-    return {
-        "x": math.floor((x + half_circumference_meters) / (half_circumference_meters * 2 / pow(2, zoom))),
-        "y": math.floor((-y + half_circumference_meters) / (half_circumference_meters * 2 / pow(2, zoom))),
-        "z": zoom
-    }
-
-def toMercator(coords):
-    points = []
-    for coord in coords:
-        points.append(latLngToMeters(coord))
-    return points
 
 def remap(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is

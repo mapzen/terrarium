@@ -25,6 +25,12 @@ Data Source:
 
 ## Requirements
 
+- Install PyProj
+
+```bash
+pip install pyproj
+```
+
 - Install [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
 
 ```bash
@@ -35,6 +41,12 @@ pip install requests
 
 ```bash
 pip install shapely 
+```
+
+- Install [TileStache](https://github.com/TileStache/TileStache)
+
+```bash
+pip install TileStache 
 ```
 
 ## Terrain Tiles building process
