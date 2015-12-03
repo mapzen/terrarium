@@ -2,11 +2,12 @@
 
 ## Process
 
-### A Approach: One big image to rule them all 
+### Approach A: One big image to rule them all 
 
 #### Data Sources
 
-* 
+* [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/)
+
 * [OpenStreetMap](http://www.openstreetmap.org/)
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
@@ -99,17 +100,28 @@ cd data
 ./makeATiles.py
 ```
 
+Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
+
+[buildings error](imgs/01-buildings.png)
+
+The top of the buildings have been extrude according to the heightmap but in a incongruent way. To fix this issue a new approach had to be develop
 
 
-### Plan B: a image per tile
+### Approach B: an image per tile
 
-Data Source:
+#### Data Sources
 
 * [Mapzen’s elevation data](https://mapzen.com/documentation/elevation/elevation-service/)
 
 * [OpenStreetMap](http://www.openstreetmap.org/)
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
+
+#### Log
+
+In order to solve the incongruence on building extrusion I thought will be beneficial to have control over the heightmap. For that a new set of tiles need to be develop. Each tile will have a double format of GeoJSON and PNG Images. The first will store the geometries explained on the previous log plus the addition of building vertices, together with that a PNG image will be compose to store the elevation data in useful way to make coherent. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct voronoi tiled images from them.
+
+![voronoi](imgs/02-voronoi.png)
 
 ## Requirements
 

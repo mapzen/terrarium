@@ -87,6 +87,10 @@ function initGUI () {
         scene.styles.elevate_cls.shaders.uniforms.u_water_height = value;
     });
 
+    scene.config.layers['earth'].visible = false;
+    scene.config.layers['wireframe'].visible = false;
+    scene.rebuildGeometry();
+
     var layer_controls = {};
     Object.keys(scene.config.layers).forEach(function(l) {
         layer_controls[l] = !(scene.config.layers[l].visible == false);
