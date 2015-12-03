@@ -102,7 +102,7 @@ python makeATiles.py
 
 Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
 
-[buildings error](imgs/01-buildings.png)
+![buildings error](imgs/01-buildings.png)
 
 The top of the buildings have been extrude according to the heightmap but in a incongruent way. To fix this issue a new approach had to be develop
 
