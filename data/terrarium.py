@@ -14,13 +14,13 @@ from tile import getTilesForPoints, toMercator
 ELEVATION_RASTER_TILE_SIZE = 256
 
 # Given a tile coordinate get the points using Mapzen's Vector Tiles service
-def getPointsFromTile(x,y,zoom):
+def getPointsFromTile(x, y, zoom, layers):
     KEY = "vector-tiles-NPGZu-Q"
     r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
     j = json.loads(r.text)
     p = [] # Array of points
     for layer in j:
-        if layer == 'roads' or layer == 'water' or layer == 'landuse': # or layer == 'buildings':
+        if layer in layers: # or layer == 'buildings':
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
@@ -191,7 +191,10 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         return
 
     # Vertices
-    points_latlon = getPointsFromTile(tile[0],tile[1],tile[2])
+    layers = ['roads', 'water', 'landuse']
+    if doPNGs:
+        layers.append('buildings');
+    points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
     points_merc = toMercator(points_latlon)
 
     # Elevation
