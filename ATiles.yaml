@@ -117,33 +117,6 @@ layers:
                 color: red
                 width: 1.px
 styles:
-    functions-map:
-        shaders:
-            defines:
-                EPSILON: 0.0000001
-            blocks:
-                global: |
-                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax, bool clamp) {
-                        if (abs(inputMin - inputMax) < EPSILON){
-                            return outputMin;
-                        } else {
-                            float outVal = ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
-                        
-                            if( clamp ){
-                                if(outputMax < outputMin){
-                                    if( outVal < outputMax ) outVal = outputMax;
-                                    else if( outVal > outputMin ) outVal = outputMin;
-                                }else{
-                                    if( outVal > outputMax ) outVal = outputMax;
-                                    else if( outVal < outputMin ) outVal = outputMin;
-                                }
-                            }
-                            return outVal;
-                        }
-                    }
-                    float map (in float value, in float inputMin, in float inputMax, in float outputMin, in float outputMax) {
-                        return map(value, inputMin, inputMax, outputMin, outputMax, true); 
-                    }
     generative-random:
         shaders:
             blocks:
@@ -354,7 +327,7 @@ styles:
                     }
     geometry-terrain:
         animated: true
-        mix: [generative-caustic, geometry-matrices, functions-map, filter-grain]
+        mix: [generative-caustic, geometry-matrices, filter-grain]
         shaders:
             uniforms:
                 u_terrain: data/A/N37W123.png
@@ -367,7 +340,7 @@ styles:
                 YMIN: 4439068.068371599
                 YMAX: 4579465.0539420955
                 ZMIN: -10.0
-                ZMAX: 800.0
+                ZMAX: 400.0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
