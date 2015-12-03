@@ -72,6 +72,9 @@ def getTrianglesFromPoints(P):
     points = remapPoints(P, bbox, normal)
 
     # Perform a Delaunay tessellation
+    if len(points) == 0:
+        print("No points... no triangles")
+        return []
     delauny = Delaunay(points)
     normalize_tri = delauny.points[delauny.vertices]
 
@@ -183,7 +186,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     print(" Zoom " + str(zoom) + " tile ", tile)
     name = str(tile[2])+'-'+str(tile[0])+'-'+str(tile[1])
 
-    if os.path.isfile(path+'/'+name+".png") and os.path.isfile(path+'/'+name+".json"):
+    if os.path.isfile(path+'/'+name+".json"):
         print("Tile already created... skiping")
         return
 
@@ -195,6 +198,9 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     heights = []
     heights_range = []
     if doPNGs:
+        if os.path.isfile(path+'/'+name+".png"):
+            print("Tile already created... skiping")
+            return
         heights = getElevationFromPoints(points_latlon)
         heights_range = getRange(heights)
 
