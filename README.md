@@ -1,5 +1,7 @@
 # Terrarium
 
+![](imgs/terrarium.jpg)
+
 ## Process
 
 ### Approach A: One big image to rule them all 
@@ -93,11 +95,11 @@ In this way by breaking the tiles into small fragments the extortion of the terr
 
 ![terrain](imgs/00-terrain.png)
 
-The creation of the necessary tiles could be done running the script
+The creation of the necessary tiles could be done running the script followed by the USGS ID (default: `N37W123`) and zoom levels (default: `3-17`)
 
 ```bash
 cd data
-python makeATiles.py
+python makeATiles.py [USGS_ID] [ZOOM_RANGE]
 ```
 
 Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
@@ -125,35 +127,79 @@ In order to solve the incongruence on building extrusion I thought will be benef
 
 The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. On the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest with out distorting the roof elevation from the original.
 
-## Requirements
+![skyline](imgs/02-v-buildings.png)
 
-- Install PyProj
+Because I’m composing the elevation images for each tile we have way more control and curation on the data. This will allow to increase the resolution of the tile conform we zoom in. But still he have another to resolve first. Right now the elevation information is pass as a grayscale value, an the elevation range have to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the hole world we need a consistent way to pass this information rather than a 1 bit.
 
-```bash
-pip install pyproj
+Checking with Kevin in charge of the Mapzen’s elevation service, the elevation data have a precession of 2 bit. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation), revel the highest and lower points on earth.
+
+![](imgs/03-EarthHypso.png)
+
+With an approximated range between 9000 to -12000 meters using to color channels (GB = 255*255 = 65025) will be enough to accommodate this range. This on the python script in charge of making the raster elevation tiles look like this:
+
+```python
+	elev_unsigned = 12000+elevation
+	GREEN = math.floor(elev_unsigned/255)%255
+	BLUE = math.floor(elev_unsigned%255)
+``` 
+
+This produce a image that looks like this:
+
+![](imgs/03-colored-elevation.png) ![](imgs/03-colored-elevation-zoom.png)
+
+On the vertex shader we will need to “decode” this value by doing:
+
+```glsl
+	vec3 elev_color = texture2D(u_terrain, st).rgb;
+	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
+
 ```
 
-- Install [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
+Finally and all together each tile is hable to compose something that looks like this:
+
+![](imgs/03-landscape.png)
+
+The creation of the necessary tiles could be done running the script followed by the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
+
+```bash
+cd data
+python makeATiles.py [OSM_ID] [ZOOM_RANGE]
+```
+
+## Building your own set of terrarium tiles
+
+### Requirements
+
+You should install the following Python modules:
+
+- [SciPy](http://www.scipy.org/install.html)
+
+- PIL
+
+```bash
+pip install pil
+```
+
+- [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
 
 ```bash
 pip install requests
 ```
 
-- Install Shapely:
+- Shapely:
 
 ```bash
+apt-get install libgeos++
 pip install shapely 
 ```
 
-- Install [TileStache](https://github.com/TileStache/TileStache)
+If you are going to make A tiles (first approach described above) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).
+
+## Making terrarium tiles
 
 ```bash
-pip install TileStache 
-```
-
-## Terrain Tiles building process
-
-```bash
-cd src/
-./makeTiles.py 111968 3-17
+cd ~
+git clone —depth 1 https://github.com/patriciogonzalezvivo/terrarium.git
+cd terrarium/data
+python makeTiles.py 111968 3-17
 ```
