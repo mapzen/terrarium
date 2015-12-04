@@ -287,6 +287,11 @@ This together with a slider updating the position of the uniform ```u_water_heig
 ![flood](imgs/05-flood.gif)
 
 
+### TODO’s
+
+- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered himself to make a C program to do that
+
+-  Implement a texture per tile method on Tangram
 
 ## Building your own set of terrarium tiles
 
@@ -325,3 +330,12 @@ git clone —depth 1 https://github.com/patriciogonzalezvivo/terrarium.git
 cd terrarium/data
 python makeTiles.py 111968 3-17
 ```
+
+## Acknowledgments
+
+Special thanks my amazing fellows:
+
+- [Rob Marianski](https://twitter.com/rmarianski): engineer on the vector tiles service
+
+- [Kevin Kreiser](https://twitter.com/kevinkreiser): engineer on the elevation service
+ 
