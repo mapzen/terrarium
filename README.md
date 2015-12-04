@@ -172,7 +172,7 @@ python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 
 ![](imgs/04-normalmap.png)
 
-Is possible to lighten the surface of the terrain by adding normal information to [Tangram](https://github.com/tangrams/tangram)’s light engine some NormalMap filtering to the HeightMap obtained from  [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) through [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
+Is possible to lighten the surface of the terrain by adding normal information to [Tangram](https://github.com/tangrams/tangram)’s light engine some NormalMap filtering to the HeightMap obtained from [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) through [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
 
 ```bash
 cd data/
@@ -205,6 +205,86 @@ And then use it on the YAML scene to modify the normals on the fragment shader:
 Once the terrain is lighted by the is compute the terrain looks like this:
 
 ![enlighten terrain](imgs/04-terrain-normals.png)
+
+#### Under water
+
+Using the bounding box of the image we download from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) I construct a big rectangular polygon to draw the water level
+
+I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function.
+
+![SEM](imgs/sem-sky-0001.jpg)
+
+The code for this ```water``` is the following:
+
+```yaml
+    water:
+        base: polygons
+        animated: true
+        mix: [geometry-matrices, filter-grain]
+        blend: inlay
+        material:
+            ambient: .7
+            diffuse:
+                texture: ../imgs/sem-sky-0001.jpg
+                mapping: sphere map
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+                u_water_height: 0.
+            blocks:
+                position: |
+                    position.z += u_water_height;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                normal: |
+                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
+                filter: |
+                    color.a *= .9;
+```
+
+Then on the rest of the geometry I apply the following [caustic filter](https://en.wikipedia.org/wiki/Caustic_(optics)) to everything that above the water level. 
+
+```yaml
+
+        shaders:
+            defines:
+                TAU: 6.28318530718
+                MAX_ITER: 3
+            blocks:
+                global: |
+                    // Caustic effect from https://www.shadertoy.com/view/4ljXWh
+                    vec3 caustic (vec2 uv) {
+                        vec2 p = mod(uv*TAU, TAU)-250.0;
+                        float time = u_time * .5+23.0;
+                        vec2 i = vec2(p);
+                        float c = 1.0;
+                        float intent = .005;
+                        for (int n = 0; n < int(MAX_ITER); n++) {
+                            float t = time * (1.0 - (3.5 / float(n+1)));
+                            i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+                            c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+                        }
+                        c /= float(MAX_ITER);
+                        c = 1.17-pow(c, 1.4);
+                        vec3 color = vec3(pow(abs(c), 8.0));
+                        color = clamp(color + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
+                        color = mix(color, vec3(1.0,1.0,1.0),0.3);
+                        return color;
+                    }
+                     
+                filter: |
+										vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+                    if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
+                        color.gb += caustic(worldPosition().xy*0.005)*0.2;
+                    }
+```
+
+All this make the water and under see level looks like this:
+
+![under water](imgs/05-underwater.png)
+
+This together with a slider updating the position of the uniform ```u_water_height``` allows a nice interactive animation of  the sea levels rising:
+
+![flood](imgs/05-flood.gif)
 
 
 
