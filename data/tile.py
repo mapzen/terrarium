@@ -38,6 +38,8 @@ rangeIn = lambda start, end: range(start, end+1)
 def getTilesForPoints(points, zoom):
     bbox = getBoundingBox(points)
 
+    print bbox
+
     A = tileForMeters(latLngToMeters([bbox[0],bbox[2]]), zoom)
     B = tileForMeters(latLngToMeters([bbox[1],bbox[3]]), zoom)
 
