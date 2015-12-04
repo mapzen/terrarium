@@ -28,8 +28,8 @@ def getPointsFromTile(x, y, zoom, layers):
                             p.extend(feature['geometry']['coordinates'])                                
                         elif feature['geometry']['type'] == 'Polygon':
                             for shapes in feature['geometry']['coordinates']:
-                                #  TODO:
-                                #       - drop the extra vertex
+                                #  drop the extra vertex
+                                shapes.pop()
                                 p.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiLineString':
                             for shapes in feature['geometry']['coordinates']:
@@ -37,8 +37,8 @@ def getPointsFromTile(x, y, zoom, layers):
                         elif feature['geometry']['type'] == 'MultiPolygon':
                             for polygon in feature['geometry']['coordinates']:
                                 for shapes in polygon:
-                                    #  TODO:
-                                    #       - drop the extra vertex
+                                    #  Drop the extra vertex
+                                    shapes.pop()
                                     p.extend(shapes)
                                     
     return p
@@ -58,8 +58,8 @@ def getPointsAndGroupsFromTile(x, y, zoom, layers):
                             p.extend(feature['geometry']['coordinates'])                                
                         elif feature['geometry']['type'] == 'Polygon':
                             for shapes in feature['geometry']['coordinates']:
-                                #  TODO:
-                                #       - drop the extra vertex
+                                #  drop the extra vertex
+                                shapes.pop()
                                 if layer == 'buildings':
                                     g.append([len(p),len(shapes)])
                                 p.extend(shapes)
@@ -68,9 +68,9 @@ def getPointsAndGroupsFromTile(x, y, zoom, layers):
                                 p.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiPolygon':
                             for polygon in feature['geometry']['coordinates']:
-                                #  TODO:
-                                #       - drop the extra vertex
                                 for shapes in polygon:
+                                    #  drop the extra vertex
+                                    shapes.pop()
                                     if layer == 'buildings':
                                         g.append([len(p),len(shapes)])
                                     p.extend(shapes)
@@ -144,12 +144,11 @@ def makeHeighmap(path, name, size, height_range, points, heights):
     for i in range(total_samples):
         nx.append(remap(points[i][0], bbox[0], bbox[1], 0, imgx))
         ny.append(remap(points[i][1], bbox[2], bbox[3], imgy, 0))
-        # TODO:
-        #   - Don't use range maping. Encode a bigger range using RGB channels (rainbow pattern)
-        bri = int(remap(heights[i],height_range[0],height_range[1],0,255))
-        nr.append(bri)
-        ng.append(bri)
-        nb.append(bri)
+
+        elev_unsigned = int(12000+heights[i])
+        nr.append(int(0))
+        ng.append(int(math.floor(elev_unsigned/255)%255))
+        nb.append(int(math.floor(elev_unsigned%255)))
 
     # Compute Voronoi (one-to-all)
     # TODO:
@@ -190,7 +189,7 @@ def getPolygonFromPoints(points):
     return poly
 
 # Given a set of triangles make a multi-polygon GeoJSON
-def makeGeoJsonFromTriangles(path, name, triangles, height_range):
+def makeGeoJsonFromTriangles(path, name, triangles):
     geoJSON = {}
     geoJSON['type'] = "FeatureCollection";
     geoJSON['features'] = [];
@@ -202,9 +201,6 @@ def makeGeoJsonFromTriangles(path, name, triangles, height_range):
     element['geometry']['coordinates'] = []
     element['properties'] = {}
     element['properties']['kind'] = "terrain"
-    if (len(height_range) > 1):
-        element['properties']['min_height'] = height_range[0]
-        element['properties']['max_height'] = height_range[1]
 
     for tri in triangles:
         # if len(tri) == 3:
@@ -216,6 +212,15 @@ def makeGeoJsonFromTriangles(path, name, triangles, height_range):
         outfile.write(json.dumps(geoJSON, outfile, indent=4))
     outfile.close()
 
+def getEquilizedHeightByGroup(heights, groups):
+    for group in groups:
+        start = group[0]
+        end = start+group[1]
+        mn = min(heights[start:end])
+        for i in range(start,end):
+            heights[i] = mn
+    return heights
+
 # make a GeoJSON (for the geometry) and/or a PNG IMAGE (for the elevation information) for the tile X,Y,Z
 def makeTile(path, lng, lat, zoom, doPNGs):
     tile = [int(lng), int(lat), int(zoom)]
@@ -224,36 +229,37 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     name = str(tile[2])+'-'+str(tile[0])+'-'+str(tile[1])
 
     if os.path.isfile(path+'/'+name+".json"):
-        print("Tile already created... skiping")
-        return
+        if doPNGs:
+            if os.path.isfile(path+'/'+name+".png"):
+                print("Tile already created... skiping")
+                return
+        else:
+            print("Tile already created... skiping")
+            return
 
     # Vertices
     layers = ['roads', 'water', 'landuse']
+    groups = []
     if doPNGs:
         layers.append('buildings');
-        print layers
-        points_latlon, group = getPointsAndGroupsFromTile(tile[0], tile[1], tile[2], layers)
+        points_latlon, groups = getPointsAndGroupsFromTile(tile[0], tile[1], tile[2], layers)
     else:
         points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
     points_merc = toMercator(points_latlon)
 
+    # Tessellate points
+    triangles = getTrianglesFromPoints(points_latlon)
+    makeGeoJsonFromTriangles(path, name, triangles)
+
     # Elevation
     heights = []
-    heights_range = []
     if doPNGs:
         if os.path.isfile(path+'/'+name+".png"):
             print("Tile already created... skiping")
             return
         heights = getElevationFromPoints(points_latlon)
+        heights = getEquilizedHeightByGroup(heights, groups)
         heights_range = getRange(heights)
-
-    # Tessellate points
-    triangles = getTrianglesFromPoints(points_latlon)
-    
-    makeGeoJsonFromTriangles(path, name, triangles, heights_range)
-
-    # Make Heighmap
-    if doPNGs:
         makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, heights_range, points_merc, heights)
 
 # Return all the points of a given OSM ID
