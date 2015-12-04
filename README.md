@@ -289,9 +289,11 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 ### TODO’s
 
+-  Implement a texture per tile method on Tangram
+
 - Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered himself to make a C program to do that
 
--  Implement a texture per tile method on Tangram
+- Add more vertices to compute on the GeoJson geometry tiles using contours lines. So we are sure is enough information to cover non urban areas.
 
 ## Building your own set of terrarium tiles
 
