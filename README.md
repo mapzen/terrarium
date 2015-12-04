@@ -210,7 +210,7 @@ Once the terrain is lighted by the is compute the terrain looks like this:
 
 Using the bounding box of the image we download from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) I construct a big rectangular polygon to draw the water level
 
-I use a Spherical Environmental Map on it together with some fragment shader code to disturb the normals using a regular simplex noise function.
+I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function.
 
 ![SEM](imgs/sem-sky-0001.jpg)
 
