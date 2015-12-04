@@ -1,4 +1,4 @@
-# Terrarium
+![](imgs/terrarium.jpg)
 
 ## Process
 
@@ -124,6 +124,24 @@ In order to solve the incongruence on building extrusion I thought will be benef
 ![voronoi](imgs/02-voronoi.png) ![voronoi-zoom](imgs/02-voronoi-zoom.png)
 
 The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. On the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest with out distorting the roof elevation from the original.
+
+![skyline](imgs/02-v-buildings.png)
+
+Because I’m composing the elevation images for each tile we have way more control and curation on the data. This will allow to increase the resolution of the tile conform we zoom in. But still he have another to resolve first. Right now the elevation information is pass as a grayscale value, an the elevation range have to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the hole world we need a consistent way to pass this information rather than a 1 bit.
+
+Checking with Kevin in charge of the Mapzen’s elevation service, the elevation data have a precession of 2 bit. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation), revel the highest and lower points on earth.
+
+![](imgs/03-EarthHypso.png)
+
+With an approximated range between 9000 to -12000 meters using to color channels (GB = 255*255 = 65025) will be enough to accommodate this range. This on the python script in charge of making the raster elevation tiles look like this:
+
+```python
+	elev_unsigned = 12000+elevation
+	GREEN = math.floor(elev_unsigned/255)%255
+	BLUE = math.floor(elev_unsigned%255)
+``` 
+
+
 
 ## Requirements
 

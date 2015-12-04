@@ -6,7 +6,8 @@ sources:
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     terrain:
         type: GeoJSON
-        url: data/B/12-655-1582.json
+        # url: data/B/12-655-1582.json
+        url: data/B/13-1310-3166.json
 scene:
     background: 
         color: '#353535'
@@ -327,17 +328,24 @@ styles:
         mix: [generative-caustic, geometry-matrices, filter-grain]
         shaders:
             uniforms:
-                u_terrain: data/B/12-655-1582.png
+                # u_terrain: data/B/12-655-1582.png
+                u_terrain: data/B/13-1310-3166.png
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
                     ZOFFSET: 0
-                    XMIN: -13629027.821785385
-                    XMAX: -13619243.951739565
-                    YMIN: 4549531.728565961
-                    YMAX: 4559316.2641026
-                    ZMIN: -37.0
-                    ZMAX: 138.0
+                    # XMIN: -13629027.821785385
+                    # XMAX: -13619243.951739565
+                    # YMIN: 4549531.728565961
+                    # YMAX: 4559316.2641026
+                    # ZMIN: -37.0
+                    # ZMAX: 138.0
+                    XMIN: -13629111.31140348
+                    XMAX: -13623808.050862089
+                    YMIN: 4544536.609433264
+                    YMAX: 4549606.384832822
+                    ZMIN: -18.0
+                    ZMAX: 111.0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
