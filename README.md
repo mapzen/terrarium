@@ -1,3 +1,5 @@
+# Terrarium
+
 ![](imgs/terrarium.jpg)
 
 ## Process
@@ -93,11 +95,11 @@ In this way by breaking the tiles into small fragments the extortion of the terr
 
 ![terrain](imgs/00-terrain.png)
 
-The creation of the necessary tiles could be done running the script
+The creation of the necessary tiles could be done running the script followed by the USGS ID (default: `N37W123`) and zoom levels (default: `3-17`)
 
 ```bash
 cd data
-python makeATiles.py
+python makeATiles.py [USGS_ID] [ZOOM_RANGE]
 ```
 
 Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
@@ -141,26 +143,63 @@ With an approximated range between 9000 to -12000 meters using to color channels
 	BLUE = math.floor(elev_unsigned%255)
 ``` 
 
+This produce a image that looks like this:
 
+![](imgs/03-colored_elevation.png)
 
-## Requirements
+On the vertex shader we will need to “decode” this value by doing:
 
-- Install [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
+```glsl
+	vec3 elev_color = texture2D(u_terrain, st).rgb;
+	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
+
+```
+
+Finally and all together each tile is hable to compose something that looks like this:
+
+![](imgs/03-landscape.png)
+
+The creation of the necessary tiles could be done running the script followed by the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
+
+```bash
+cd data
+python makeATiles.py [OSM_ID] [ZOOM_RANGE]
+```
+
+## Building your own set of terrarium tiles
+
+### Requirements
+
+You should install the following Python modules:
+
+- [SciPy](http://www.scipy.org/install.html)
+
+- PIL
+
+```bash
+pip install pil
+```
+
+- [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
 
 ```bash
 pip install requests
 ```
 
-- Install Shapely:
+- Shapely:
 
 ```bash
 apt-get install libgeos++
 pip install shapely 
 ```
 
-## Terrain Tiles building process
+If you are going to make A tiles (first approach described above) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).
+
+## Making terrarium tiles
 
 ```bash
-cd src/
-./makeTiles.py 111968 3-17
+cd ~
+git clone —depth 1 https://github.com/patriciogonzalezvivo/terrarium.git
+cd terrarium/data
+python makeTiles.py 111968 3-17
 ```
