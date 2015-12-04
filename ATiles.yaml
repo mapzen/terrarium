@@ -331,6 +331,8 @@ styles:
         shaders:
             uniforms:
                 u_terrain: data/A/N37W123.png
+                # u_normalmap: data/A/N37W123-normal-prewitt-5x5.png
+                u_normalmap: data/A/N37W123-normal-sobel-5x5.png
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
@@ -350,7 +352,7 @@ styles:
                                 _worldPos.y > YMIN && _worldPos.y < YMAX;
                     }
 
-                    float getNormalHeight(vec2 position) {
+                    float getHeight(vec2 position) {
                         vec2 worldPos = u_map_position.xy + position.xy;
                         if (inZone(worldPos)) {
                             vec2 st = vec2(0.0);
@@ -362,9 +364,21 @@ styles:
                         }
                     }
 
+                    vec3 getNormal(vec2 position) {
+                        vec2 worldPos = u_map_position.xy + position.xy;
+                        if (inZone(worldPos)) {
+                            vec2 st = vec2(0.0);
+                            st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
+                            st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
+                            return texture2D(u_normalmap, st).rgb*2.-1.;
+                        } else {
+                            return vec3(0.,0.,1.);
+                        }
+                    }
+
                     void extrudeTerrain(inout vec4 position) {
                         vec2 pos = position.xy;
-                        float height = getNormalHeight(pos.xy);
+                        float height = getHeight(pos.xy);
                         if (height <= 1.0) {
                             position.z += ZMIN+height*(ZMAX-ZMIN);
                         }
@@ -375,8 +389,8 @@ styles:
                     extrudeTerrain(position);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 color: |
-                    float height = getNormalHeight(v_orig_pos.xy);
-                    vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+                    float height = getHeight(v_orig_pos.xy);
+                    vec2 wordPos = u_map_position.xy + v_orig_pos.xy; 
                 filter: |
                     if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
@@ -412,6 +426,8 @@ styles:
                         rgb = rgb*rgb*(3.0-2.0*rgb);
                         return c.z * mix( vec3(1.0), rgb, c.y);
                     }
+                normal: |
+                    normal.rgb = getNormal(v_orig_pos.xy);
                 color: |
                     if (inZone(wordPos)) {
                         color.rgb = hsb2rgb(vec3((1.-height)*.7,height,height));
