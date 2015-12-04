@@ -166,6 +166,48 @@ cd data
 python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 ```
 
+### Parallel explorations
+
+#### Normalmap
+
+![](imgs/04-normalmap.png)
+
+Is possible to lighten the surface of the terrain by adding normal information to [Tangram](https://github.com/tangrams/tangram)’s light engine some NormalMap filtering to the HeightMap obtained from  [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) through [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
+
+```bash
+cd data/
+glslViewer normal.frag A/N37W123.png -o A/N37W123-normal.png
+```
+
+On the fragment shader we can use the following function to retrieve the normal values for each point:
+
+```gals
+vec3 getNormal(vec2 position) {
+	vec2 worldPos = u_map_position.xy + position.xy;
+	if (inZone(worldPos)) {
+		vec2 st = vec2(0.0);
+		st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
+		st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
+		return texture2D(u_normalmap, st).rgb*2.-1.;
+	} else {
+		return vec3(0.,0.,1.);
+	}
+}
+```
+
+And then use it on the YAML scene to modify the normals on the fragment shader:
+
+```
+	normal: |
+		normal.gb = getNormal(v_orig_pos.xy);
+```
+
+Once the terrain is lighted by the is compute the terrain looks like this:
+
+![enlighten terrain](imgs/04-terrain-normals.png)
+
+
+
 ## Building your own set of terrarium tiles
 
 ### Requirements
