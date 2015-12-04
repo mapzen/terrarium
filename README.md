@@ -278,9 +278,14 @@ Then on the rest of the geometry I apply the following [caustic filter](https://
                     }
 ```
 
-This together with a slider updating the position of the uniform ```u_u_water_height``` allows a nice interactive animation of  the sea levels rising:
+All this make the water and under see level looks like this:
+
+![under water](imgs/05-underwater.png)
+
+This together with a slider updating the position of the uniform ```u_water_height``` allows a nice interactive animation of  the sea levels rising:
 
 ![flood](imgs/05-flood.gif)
+
 
 
 ## Building your own set of terrarium tiles
