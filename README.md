@@ -127,12 +127,6 @@ The idea behind this approach is that vertices will fill ‘cells’ with a simi
 
 ## Requirements
 
-- Install PyProj
-
-```bash
-pip install pyproj
-```
-
 - Install [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
 
 ```bash
@@ -142,13 +136,8 @@ pip install requests
 - Install Shapely:
 
 ```bash
+apt-get install libgeos++
 pip install shapely 
-```
-
-- Install [TileStache](https://github.com/TileStache/TileStache)
-
-```bash
-pip install TileStache 
 ```
 
 ## Terrain Tiles building process
