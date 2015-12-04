@@ -145,7 +145,7 @@ With an approximated range between 9000 to -12000 meters using to color channels
 
 This produce a image that looks like this:
 
-![](imgs/03-colored_elevation.png)
+![](imgs/03-colored-elevation.png) ![](imgs/03-colored-elevation-zoom.png)
 
 On the vertex shader we will need to “decode” this value by doing:
 
