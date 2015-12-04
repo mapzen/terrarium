@@ -7,6 +7,7 @@ sources:
     terrain:
         type: GeoJSON
         url: data/B/12-655-1582.json
+        # url: data/B/13-1310-3166.json
 scene:
     background: 
         color: '#353535'
@@ -328,6 +329,7 @@ styles:
         shaders:
             uniforms:
                 u_terrain: data/B/12-655-1582.png
+                # u_terrain: data/B/13-1310-3166.png
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
@@ -336,8 +338,10 @@ styles:
                     XMAX: -13619243.951739565
                     YMIN: 4549531.728565961
                     YMAX: 4559316.2641026
-                    ZMIN: -37.0
-                    ZMAX: 138.0
+                    # XMIN: -13629111.31140348
+                    # XMAX: -13623808.050862089
+                    # YMIN: 4544536.609433264
+                    # YMAX: 4549606.384832822
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
@@ -347,23 +351,24 @@ styles:
                                 _worldPos.y > YMIN && _worldPos.y < YMAX;
                     }
 
-                    float getNormalHeight(vec2 position) {
+                    float getHeight(vec2 position) {
                         vec2 worldPos = u_map_position.xy + position.xy;
                         if (inZone(worldPos)) {
                             vec2 st = vec2(0.0);
                             st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
                             st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
-                            return texture2D(u_terrain, st).r;
+                            vec3 color = texture2D(u_terrain, st).rgb;
+                            return -12000.0+color.g*65025.+color.b*255.;
                         } else {
-                            return 1.1;
+                            return 0.0;
                         }
                     }
 
                     void extrudeTerrain(inout vec4 position) {
                         vec2 pos = position.xy;
-                        float height = getNormalHeight(pos.xy);
-                        if (height <= 1.0) {
-                            position.z += ZMIN+height*(ZMAX-ZMIN);
+                        float height = getHeight(pos.xy);
+                        if (height != 0.0) {
+                            position.z += height;
                         }
                     }
                 position: |
@@ -372,10 +377,10 @@ styles:
                     extrudeTerrain(position);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 color: |
-                    float height = getNormalHeight(v_orig_pos.xy);
+                    float height = getHeight(v_orig_pos.xy);
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
                 filter: |
-                    if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
+                    if (inZone(wordPos) && height+worldPosition().z < u_water_height) {
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
                     }
     elevate_ply:
@@ -411,8 +416,9 @@ styles:
                     }
                 color: |
                     if (inZone(wordPos)) {
-                        color.rgb = hsb2rgb(vec3((1.-height)*.7,height,height));
-                    }            
+                        float n_height = (12000.+height)/21000.;
+                        color.rgb = hsb2rgb(vec3((1.-n_height)*.7,n_height,n_height));
+                    }
     water:
         base: polygons
         animated: true

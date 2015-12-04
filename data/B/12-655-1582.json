@@ -73689,9 +73689,7 @@
             }, 
             "type": "Feature", 
             "properties": {
-                "min_height": -37, 
-                "kind": "terrain", 
-                "max_height": 138
+                "kind": "terrain"
             }
         }
     ]
