@@ -26,9 +26,22 @@ map = (function () {
         scrollWheelZoom: 'center'
     });
 
+    var style_file = 'scene.yaml';
+    var url_search = window.location.search.slice(1);
+    if (url_search.length > 0) {
+        var ext = url_search.substr(url_search.lastIndexOf('.') + 1);
+        if (ext == "yaml" || ext == "yaml/") {
+            style_file = url_search;
+            console.log('LOADING' + url_search + ' STYLE');
+        } else {
+            style_file = url_search+'.yaml';
+            console.log('LOADING' + url_search + ' STYLE');
+        }
+    }
+
     // Tangram Layer
     var layer = Tangram.leafletLayer({
-        scene: 'scene.yaml',
+        scene: style_file,
         attribution: '<a href="https://twitter.com/patriciogv" target="_blank">@patriciogv</a> | <a href="https://mapzen.com/tangram" target="_blank">Tangram</a> | &copy; OSM contributors | <a href="https://mapzen.com/" target="_blank">Mapzen</a>'
     });
 
