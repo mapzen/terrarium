@@ -154,6 +154,7 @@ On the vertex shader we will need to “decode” this value by doing:
 	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
 
 ```
+<<<<<<< HEAD
 
 Finally and all together each tile is hable to compose something that looks like this:
 
@@ -168,6 +169,22 @@ python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 
 ### Parallel explorations
 
+=======
+
+Finally and all together each tile is hable to compose something that looks like this:
+
+![](imgs/03-landscape.png)
+
+The creation of the necessary tiles could be done running the script followed by the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
+
+```bash
+cd data
+python makeATiles.py [OSM_ID] [ZOOM_RANGE]
+```
+
+### Parallel explorations
+
+>>>>>>> f46e6cbe23e6569f0d16a4bcd2554479dc3f233f
 #### Normalmap
 
 ![](imgs/04-normalmap.png)
@@ -295,6 +312,12 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 - Add more vertices to compute on the GeoJson geometry tiles using contours lines. So we are sure is enough information to cover non urban areas.
 
+<<<<<<< HEAD
+=======
+- Under zoom level 12 geoJSON tiles are too big (~10mb in the worst scenario). Maybe this zoom levels don’t need so much definition on the terrain geometry. Using simplify data coming form elevation contour and with heightmap/normalmap is enough. Contour/roads data is enough until between 1-14 the buildings are to small. Or maybe just heightmap/normalmap is enough user don’t really see the terrain under 12.
+ 
+
+>>>>>>> f46e6cbe23e6569f0d16a4bcd2554479dc3f233f
 ## Building your own set of terrarium tiles
 
 ### Requirements
