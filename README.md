@@ -295,6 +295,9 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 - Add more vertices to compute on the GeoJson geometry tiles using contours lines. So we are sure is enough information to cover non urban areas.
 
+- Simplify/encode/zip or filter the data on geoJSON tiles, sometimes they are too big
+ 
+
 ## Building your own set of terrarium tiles
 
 ### Requirements
