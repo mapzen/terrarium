@@ -1,0 +1,36 @@
+{
+    "type": "FeatureCollection", 
+    "features": [
+        {
+            "geometry": {
+                "type": "MultiPolygon", 
+                "coordinates": [
+                    [
+                        [
+                            [
+                                -122.0004272, 
+                                37.7400196
+                            ], 
+                            [
+                                -122.0006175, 
+                                37.7403133
+                            ], 
+                            [
+                                -122.0004719, 
+                                37.7401217
+                            ], 
+                            [
+                                -122.0004272, 
+                                37.7400196
+                            ]
+                        ]
+                    ]
+                ]
+            }, 
+            "type": "Feature", 
+            "properties": {
+                "kind": "terrain"
+            }
+        }
+    ]
+}
