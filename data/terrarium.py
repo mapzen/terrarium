@@ -317,11 +317,7 @@ def getPointsOfID (osmID):
     points = []
     for node in root:
         if node.tag == "node":
-<<<<<<< HEAD
-            points.append([float(node.attrib["lat"]),float(node.attrib["lon"])])
-=======
             points.append([float(node.attrib["lon"]),float(node.attrib["lat"])])
->>>>>>> f46e6cbe23e6569f0d16a4bcd2554479dc3f233f
     return points
 
 # Make all the tiles for points
