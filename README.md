@@ -312,12 +312,8 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 - Add more vertices to compute on the GeoJson geometry tiles using contours lines. So we are sure is enough information to cover non urban areas.
 
-<<<<<<< HEAD
-=======
 - Under zoom level 12 geoJSON tiles are too big (~10mb in the worst scenario). Maybe this zoom levels don’t need so much definition on the terrain geometry. Using simplify data coming form elevation contour and with heightmap/normalmap is enough. Contour/roads data is enough until between 1-14 the buildings are to small. Or maybe just heightmap/normalmap is enough user don’t really see the terrain under 12.
  
-
->>>>>>> f46e6cbe23e6569f0d16a4bcd2554479dc3f233f
 ## Building your own set of terrarium tiles
 
 ### Requirements
