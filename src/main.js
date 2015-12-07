@@ -11,7 +11,7 @@ var gui;
 map = (function () {
     'use strict';
 
-    var map_start_location = [0, 0, 3];
+    var map_start_location = [37.7938, -122.3490, 14];
     /*** URL parsing ***/
     var url_hash = window.location.hash.slice(1).split('/');
     if (url_hash.length == 3) {
@@ -64,7 +64,10 @@ function init() {
     layer.on('init', function() {    
         window.setInterval("update(getCurrentTime())", 100);
         // Create dat GUI
-        initGUI();
+
+        if (scene.styles.water.shaders.uniforms.u_water_height !== undefined) {
+            initGUI();
+        }
     });
     layer.addTo(map);
 
