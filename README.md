@@ -2,7 +2,7 @@
 
 ![](imgs/terrarium.jpg)
 
-Experiments on terrains by [Patricio Gonzalez Vivo](https://twitter.com/patriciogv)
+Experiments on terrains by [Patricio Gonzalez Vivo](https://twitter.com/patriciogv) at [Mapzen](https://mapzen.com/).
 
 ## Process
 
