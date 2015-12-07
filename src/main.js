@@ -144,7 +144,9 @@ function update(time) {   // time in seconds since Jan. 01, 1970 UTC
         scene.styles.elevate_ply.shaders.uniforms.u_offset = offset;
         scene.styles.elevate_lns.shaders.uniforms.u_offset = offset;
         scene.styles.elevate_cls.shaders.uniforms.u_offset = offset;
-        scene.styles.water.shaders.uniforms.u_offset = offset;
+        if (scene.styles.water !== undefined) {
+            scene.styles.water.shaders.uniforms.u_offset = offset;
+        }
     }
 
     // map.setZoom( map.getZoom()+(offset_target[2]-map.getZoom())*speed*0.5 );

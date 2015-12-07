@@ -1,8 +1,8 @@
 # Terrarium
 
-![](imgs/terrarium.jpg)
-
 Experiments on terrains by [Patricio Gonzalez Vivo](https://twitter.com/patriciogv) at [Mapzen](https://mapzen.com/).
+
+![](imgs/terrarium.jpg)
 
 ## Process
 
