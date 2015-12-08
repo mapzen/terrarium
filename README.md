@@ -156,7 +156,6 @@ On the vertex shader we will need to “decode” this value by doing:
 	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
 
 ```
-<<<<<<< HEAD
 
 Finally and all together each tile is hable to compose something that looks like this:
 
@@ -171,22 +170,6 @@ python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 
 ### Parallel explorations
 
-=======
-
-Finally and all together each tile is hable to compose something that looks like this:
-
-![](imgs/03-landscape.png)
-
-The creation of the necessary tiles could be done running the script followed by the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
-
-```bash
-cd data
-python makeATiles.py [OSM_ID] [ZOOM_RANGE]
-```
-
-### Parallel explorations
-
->>>>>>> f46e6cbe23e6569f0d16a4bcd2554479dc3f233f
 #### Normalmap
 
 ![](imgs/04-normalmap.png)
@@ -200,7 +183,7 @@ glslViewer normal.frag A/N37W123.png -o A/N37W123-normal.png
 
 On the fragment shader we can use the following function to retrieve the normal values for each point:
 
-```gals
+```glsl
 vec3 getNormal(vec2 position) {
 	vec2 worldPos = u_map_position.xy + position.xy;
 	if (inZone(worldPos)) {
@@ -216,7 +199,7 @@ vec3 getNormal(vec2 position) {
 
 And then use it on the YAML scene to modify the normals on the fragment shader:
 
-```
+```yaml
 	normal: |
 		normal.gb = getNormal(v_orig_pos.xy);
 ```
