@@ -22,7 +22,7 @@ My first approach was to download a heightmap from the [Shuttle Radar Topography
 
 ![Tile N37W123](imgs/00-heighmap.png)
 
-Once I download and unzip the tile from [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/). I convert it to a PNG using [gdal](https://www.mapbox.com/tilemill/docs/guides/gdal/):
+After downloading and unzipping the tile from [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I converted it to a PNG using [gdal](https://www.mapbox.com/tilemill/docs/guides/gdal/):
 
 ```bash
 wget http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/N37W123.SRTMGL1.hgt.zip
@@ -36,7 +36,7 @@ Downloading and inspecting the [JSON file with the bounding boxes](http://dwtkns
 [-13692328.289900804, -13580946.954451224, 4439068.068371599, 4579465.0539420955]
 ```
 
-Later I feed this values into a vertex shader on [Mapzen’s Map Engine](https://github.com/tangrams/tangram) together with a ```MINZ``` and ```MAXZ``` for the elevation range
+Later I feed this values into a vertex shader on [Mapzen’s Map Engine](https://github.com/tangrams/tangram) together with a ```MINZ``` and ```MAXZ``` for the elevation range:
 
 ```yams
 geometry-terrain:
@@ -81,34 +81,34 @@ geometry-terrain:
                     }
 ```
 
-In the above code you can see how I’m checking if the vertex is inside the zone for what I have elevation data. If that’s true it perform the extrusion of the vertices.
+In the code above you can see how I’m checking if the vertex is inside the zone for where I have elevation data. If that’s true it extrudes the vertices.
 
 ![just earth](imgs/00-earth-orig.png)
 
-As can be notice the Polygons form the ```earth``` layer on OSM don’t have enough subdivisions and the vertices are extruded in a way that hide important features like roads and buildings (notice the errors generated on the image bellow).
+Sometimes the polygons that form the ```earth``` layer on OSM don’t have enough subdivisions and the vertices are extruded in a way that hides important features like roads and buildings, as seen in the image below.
 
 ![errors](imgs/00-earth.png)
 
-To fix this I start making a custom set of plane tiles with subdivisions on important corners ( coming from polygons and lines from OSM ```earth```, ```roads``` and ```landuse``` layers)
+To fix this I generate a custom set of plane tiles with subdivisions on important corners (coming from polygons and lines from OSM ```earth```, ```roads``` and ```landuse``` layers)
 
 ![subdivitions](imgs/00-subdivision.png)
 
-In this way by breaking the tiles into small fragments the extortion of the terrain don’t hide geometry.
+By breaking the tiles into small fragments, the extrusion of the terrain doesn’t hide the geometry.
 
 ![terrain](imgs/00-terrain.png)
 
-The creation of the necessary tiles could be done running the script followed by the USGS ID (default: `N37W123`) and zoom levels (default: `3-17`)
+Running this script using the USGS ID (default: `N37W123`) and zoom levels (default: `3-17`) will create the necessary tiles:
 
 ```bash
 cd data
 python makeATiles.py [USGS_ID] [ZOOM_RANGE]
 ```
 
-Once the tiles are done and you watch the map in higher zoom levels could be appreciated a new problem. 
+Once the tiles are done and you look at the map in higher zoom levels, a new problem might emerge: 
 
 ![buildings error](imgs/01-buildings.png)
 
-The top of the buildings have been extrude according to the heightmap but in a incongruent way. To fix this issue a new approach had to be develop
+The top of the buildings have been extruded according to the heightmap, but in a incongruent way. To fix this issue we developed a new approach.
 
 
 ### Approach B: an image per tile
@@ -123,21 +123,21 @@ The top of the buildings have been extrude according to the heightmap but in a i
 
 #### Log
 
-In order to solve the incongruence on building extrusion I thought will be beneficial to have control over the heightmap. For that a new set of tiles need to be develop. Each tile will have a double format of GeoJSON and PNG Images. The first will store the geometries explained on the previous log plus the addition of building vertices, together with that a PNG image will be compose to store the elevation data in useful way to make coherent. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct voronoi tiled images from them.
+In order to solve the incongruence on building extrusion I thought it would be beneficial to have control over the heightmap. For that, we need to develop a new set of tiles. Each tile will have a double format of both GeoJSON and PNG images. The first will store the geometries explained on the previous section, plus the addition of building vertices, together with a PNG image that stores the elevation data in a useful and coherent way. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct Voronoi tiled images from them.
 
 ![voronoi](imgs/02-voronoi.png) ![voronoi-zoom](imgs/02-voronoi-zoom.png)
 
-The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. On the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest with out distorting the roof elevation from the original.
+The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. In the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest upon, with out distorting the original roof elevation.
 
 ![skyline](imgs/02-v-buildings.png)
 
-Because I’m composing the elevation images for each tile we have way more control and curation on the data. This will allow to increase the resolution of the tile conform we zoom in. But still he have another to resolve first. Right now the elevation information is pass as a grayscale value, an the elevation range have to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the hole world we need a consistent way to pass this information rather than a 1 bit.
+Because I’m composing the elevation images for each tile, we have way more control and curation of the data. This will allow us to increase the resolution and precision of the tile as we zoom in. But we still have another issue to resolve: Right now the elevation information is passed as a grayscale value, but the elevation range has to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the whole world we need a consistent way to pass this information rather than as a 1 bit value.
 
-Checking with Kevin in charge of the Mapzen’s elevation service, the elevation data have a precession of 2 bit. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation), revel the highest and lower points on earth.
+Checking with [Kevin](https://twitter.com/kevinkreiser) who is in charge of Mapzen’s elevation service, the elevation data have a precision of 2 bits. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation) reveals the highest and lowest points on earth.
 
 ![](imgs/03-EarthHypso.png)
 
-With an approximated range between 9000 to -12000 meters using to color channels (GB = 255*255 = 65025) will be enough to accommodate this range. This on the python script in charge of making the raster elevation tiles look like this:
+With an approximate range of 9000 to -12000 meters, color channels (GB = 255*255 = 65025) can accommodate this data range. The python script in charge of making the raster elevation tiles now looks like this...
 
 ```python
 	elev_unsigned = 12000+elevation
@@ -145,11 +145,11 @@ With an approximated range between 9000 to -12000 meters using to color channels
 	BLUE = math.floor(elev_unsigned%255)
 ``` 
 
-This produce a image that looks like this:
+which produces a image that looks like this:
 
 ![](imgs/03-colored-elevation.png) ![](imgs/03-colored-elevation-zoom.png)
 
-On the vertex shader we will need to “decode” this value by doing:
+On the vertex shader we will need to “decode” this value:
 
 ```glsl
 	vec3 elev_color = texture2D(u_terrain, st).rgb;
@@ -157,11 +157,11 @@ On the vertex shader we will need to “decode” this value by doing:
 
 ```
 
-Finally and all together each tile is hable to compose something that looks like this:
+Putting it all together, each tile is rendered into something that looks like this!
 
 ![](imgs/03-landscape.png)
 
-The creation of the necessary tiles could be done running the script followed by the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
+The necessary tiles can be created by running the script with the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
 
 ```bash
 cd data
@@ -174,14 +174,17 @@ python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 
 ![](imgs/04-normalmap.png)
 
-Is possible to lighten the surface of the terrain by adding normal information to [Tangram](https://github.com/tangrams/tangram)’s light engine some NormalMap filtering to the HeightMap obtained from [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) through [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
+It is possible to illuminate the surface of the terrain by adding "normal" information to [Tangram](https://github.com/tangrams/tangram)’s light engine. (The [normal](https://mapzen.com/documentation/tangram/Materials-Overview/#normals) of a polygon is a three-dimensional vector describing the direction that it is considered to be facing, which affects the color and shininess of the polygon.)
+
+
+We can make the NormalMap using the HeightMap we got from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the Tangram shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) using [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
 
 ```bash
 cd data/
 glslViewer normal.frag A/N37W123.png -o A/N37W123-normal.png
 ```
 
-On the fragment shader we can use the following function to retrieve the normal values for each point:
+On the fragment shader we can use the following function to retrieve the normal values for each point...
 
 ```glsl
 vec3 getNormal(vec2 position) {
@@ -197,22 +200,22 @@ vec3 getNormal(vec2 position) {
 }
 ```
 
-And then use it on the YAML scene to modify the normals on the fragment shader:
+and then use it on the YAML scene to modify the normals on the fragment shader:
 
 ```yaml
 	normal: |
 		normal.gb = getNormal(v_orig_pos.xy);
 ```
 
-Once the terrain is lighted by the is compute the terrain looks like this:
+Once the terrain is "lit", the terrain looks like this:
 
 ![enlighten terrain](imgs/04-terrain-normals.png)
 
 #### Under water
 
-Using the bounding box of the image we download from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) I construct a big rectangular polygon to draw the water level
+Using the bounding box of the image we downloaded from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I can construct a big rectangular polygon in which to draw the water level.
 
-I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function.
+I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function to make it look more "natural".
 
 ![SEM](imgs/sem-sky-0001.jpg)
 
@@ -280,7 +283,7 @@ Then on the rest of the geometry I apply the following [caustic filter](https://
                     }
 ```
 
-All this make the water and under see level looks like this:
+All of this makes the water looks like this:
 
 ![under water](imgs/05-underwater.png)
 
@@ -293,11 +296,11 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 -  Implement a texture per tile method on Tangram
 
-- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered himself to make a C program to do that
+- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered to make a C program to do that
 
-- Add more vertices to compute on the GeoJson geometry tiles using contours lines. So we are sure is enough information to cover non urban areas.
+- Add more vertices to compute on the GeoJson geometry tiles using contours lines, so we are sure there is enough information to cover non urban areas.
 
-- Under zoom level 12 geoJSON tiles are too big (~10mb in the worst scenario). Maybe this zoom levels don’t need so much definition on the terrain geometry. Using simplify data coming form elevation contour and with heightmap/normalmap is enough. Contour/roads data is enough until between 1-14 the buildings are to small. Or maybe just heightmap/normalmap is enough user don’t really see the terrain under 12.
+- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifing data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
  
 ## Building your own set of terrarium tiles
 
@@ -326,7 +329,7 @@ apt-get install libgeos++
 pip install shapely 
 ```
 
-If you are going to make A tiles (first approach described above) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).
+If you are going to make A tiles (the first approach, described at the top of this post) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).
 
 ## Making terrarium tiles
 
