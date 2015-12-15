@@ -142,8 +142,8 @@ def makeHeighmap(path, name, size, points, heights):
 
     # subdivision from opencv, can do voronoi and its dual the delaunay triangulation
     subdiv = cv2.Subdiv2D((0, 0, size, size))
-    for k, v in point_heights.iteritems():
-        subdiv.insert(v)
+    for p in point_heights.iterkeys():
+        subdiv.insert(p)
     (facets, centers) = subdiv.getVoronoiFacetList([])
 
     # an image where we will rasterize the voronoi cells
