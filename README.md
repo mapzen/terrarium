@@ -288,11 +288,13 @@ This together with a slider updating the position of the uniform ```u_water_heig
 ![flood](imgs/05-flood.gif)
 
 
+### DONE’s
+
+- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered to make a C program to do that. https://github.com/mapzen/terrarium/pull/2
+
 ### TODO’s
 
--  Implement a texture per tile method on Tangram
-
-- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered to make a C program to do that
+- Implement a texture per tile method on Tangram
 
 - Add more vertices to compute on the GeoJson geometry tiles using contours lines, so we are sure there is enough information to cover non urban areas.
 
