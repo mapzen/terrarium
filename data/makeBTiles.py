@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-# Author: Patricio Gonzalez Vivo -height_range 2015 (@patriciogv)
+# Authors: 
+# 	- Patricio Gonzalez Vivo (@patriciogv)
+#	- Kevin Kreiser (@kevinkreiser)
+#
 import sys
 from terrarium import getPointsOfID, makeTile, makeTilesOfPoints
 from common import getStringRangeToArray

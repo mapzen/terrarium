@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# Author: Patricio Gonzalez Vivo - 2015 (@patriciogv)
+# Authors: 
+# 	- Patricio Gonzalez Vivo (@patriciogv)
+#	- Kevin Kreiser (@kevinkreiser)
 # Thanks to Derek Watkins ( @dwtkns ) for collectiong the data 
 # and making it easy to use in this project http://dwtkns.com/srtm30m/
 

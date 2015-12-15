@@ -358,7 +358,7 @@ styles:
                             st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
                             st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
                             vec3 color = texture2D(u_terrain, st).rgb;
-                            return -12000.0+color.g*65025.+color.b*255.;
+                            return -32768.+color.g*65025.+color.b*255.;
                         } else {
                             return 0.0;
                         }
