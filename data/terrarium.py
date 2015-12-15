@@ -147,16 +147,18 @@ def makeHeighmap(path, name, size, points, heights):
     (facets, centers) = subdiv.getVoronoiFacetList([])
 
     # an image where we will rasterize the voronoi cells
-    image = numpy.zeros((size, size, 1), dtype = 'int16')
+    image = numpy.zeros((size, size, 3), dtype = 'uint8')
     for i in xrange(0, len(facets)):
         ifacet_arr = []
         for f in facets[i]:
             ifacet_arr.append(f)
         ifacet = numpy.array(ifacet_arr, numpy.int)
-        # the color is the height at the voronoi cite for this cell
-        color = (point_heights[(centers[i][0], centers[i][1])])
+        # the color is the height at the voronoi cite for this cell, offset to bring to unsigned 16bits
+        height = point_heights[(centers[i][0], centers[i][1])] + 32768
+        # to back them into a standard texture we split the high and low order bytes, note the order is G B R
+        color = (int(math.floor(height % 255)), int(math.floor(height / 255) % 255), 0)
         # we exploit the fact that voronoi cells are convex polygons for faster rasterization
-        cv2.fillConvexPoly(img, ifacet, color, cv2.CV_AA, 0)
+        cv2.fillConvexPoly(image, ifacet, color, cv2.CV_AA, 0)
 
     # we'll keep the result here
     cv2.imwrite(path + '/' + name + '.png', image)
