@@ -1,2 +1,5 @@
 .DS_Store
-data/*.pyc 
+data/*.pyc
+data/A/*.json
+data/B/*.json
+data/B/*.png
