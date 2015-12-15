@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+    Tangram: real-time WebGL rendering for OpenStreetMap
+
+    http://github.com/tangrams/tangram
+    http://mapzen.com
+-->
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terrarium</title>
+
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link href='https://fonts.googleapis.com/css?family=Jura:400,300,600,500&subset=latin,cyrillic-ext,greek,latin-ext,cyrillic' rel='stylesheet' type='text/css'>
+
+    <link type='text/css' rel='stylesheet' href="css/style.css">
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <div id="hud">
+        <div id="level">
+            <input id="level_range" type='range' min='0' max='32' step='1' value='0' oninput="levelChange(this.value)" onchange="levelChange(this.value)"/>
+            <div id="level_display">0</div>
+        </div>
+        <div id="orbit">
+            <input type="checkbox" name="checkbox-option" id="orbit_button" class="hide-checkbox" value="orbit_button" checked> <label onclick="orbitChange()">Orbit</label>
+        </div>
+    </div>div>
+
+    <!-- 3rd party libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"></script>
+    <!-- bog-standard leaflet URL hash -->
+    <script src="src/leaflet-hash.js"></script>
+    <!-- A lightweight graphical user interface for changing variables in JavaScript.  -->
+    <script src="https://rawgit.com/dataarts/dat.gui/8f0eba8ade601ec401a940d36caf4bd1fffaeb65/build/dat.gui.min.js"></script>  
+    <!-- Tangram library -->
+    <script src="https://mapzen.com/tangram/0.4/tangram.min.js"></script>
+    <!-- // <script src="http://localhost:8001/dist/tangram.debug.js"></script> -->
+    <!-- End of 3rd party libraries -->
+    
+    <!-- MAIN -->
+    <script src="src/main.js"></script>
+
+    <!-- Adding a script block to post message to the parent container (think iframed demos) -->
+    <script type="text/javascript">
+      window.addEventListener("hashchange",function(){parent.postMessage(window.location.hash, "*")});
+    </script>
+
+    <!-- Mapzen map UI -->
+    <script src='//s3.amazonaws.com/assets-staging.mapzen.com/ui/mapzen-ui.min.js'></script>
+    <script>
+    MPZN.bug({
+        name: 'Terrarium',
+        tweet: 'Terrarium power by @mapzen!',
+        repo: 'https://github.com/patriciogonzalezvivo/terrarium/'
+    });
+    </script>
+  </body>
+</html>
