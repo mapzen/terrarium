@@ -4,20 +4,22 @@
 # Thanks to Derek Watkins ( @dwtkns ) for collectiong the data 
 # and making it easy to use in this project http://dwtkns.com/srtm30m/
 
-import json
+import json sys
 from common import getStringRangeToArray, getBoundingBox
 from tile import toMercator
 from terrarium import getPointsOfID, makeTilesOfPoints
 
 DATA_PATH = '../data/A'
 
-# TODO:
-# 	- Use arguments
-
-ID = 'N37W123' #sys.argv[1]
-ZOOMS = "3-22" #sys.argv[2]
+ID = 'N37W123'
+ZOOMS = "3-22"
 USGS_URL = "http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/"
 USGS_BBOX_PATH = DATA_PATH+"/srtm30m_bounding_boxes.json"
+
+if (len(sys.argv) > 0):
+	ID = sys.argv[1]
+if (len(sys.argv) > 1):
+	ZOOMS = sys.argv[2]
 
 # TODO
 #	- download tile and bounding box JSON
