@@ -1,7 +1,3 @@
-# Terrarium
-
-Experiments on terrain by [Patricio Gonzalez Vivo](https://twitter.com/patriciogv) at [Mapzen](https://mapzen.com/).
-
 ![](imgs/terrarium.jpg)
 
 ## Process
@@ -325,7 +321,7 @@ pip install requests
 - NumPy:
 
 ```bash
-pip install bumpy
+pip install numpy
 ```
 
 - OpenCV for python:
@@ -352,11 +348,11 @@ cd terrarium/data
 python makeTiles.py 111968 3-17
 ```
 
-## Acknowledgments
+## How work on this?
 
-Special thanks my amazing fellows:
+- [Patricio Gonzalez Vivo](https://twitter.com/patriciogv): Came up with the first round of A and B tiles ideas
 
-- [Rob Marianski](https://twitter.com/rmarianski): engineer on the vector tiles service
+- [Kevin Kreiser](https://twitter.com/kevinkreiser): improve the voronoi algorithm to rasterize B tiles faster
 
-- [Kevin Kreiser](https://twitter.com/kevinkreiser): engineer on the elevation service
+- [Rob Marianski](https://twitter.com/rmarianski): help us with his python tiling magic
  
