@@ -309,19 +309,19 @@ You should install the following Python modules:
 - PIL
 
 ```bash
-pip install pil
+sudo pip install pil
 ```
 
 - [Requests](http://docs.python-requests.org/en/latest/user/install/#install)
 
 ```bash
-pip install requests
+sudo pip install requests
 ```
 
 - NumPy:
 
 ```bash
-pip install numpy
+sudo pip install numpy
 ```
 
 - OpenCV for python:
@@ -334,7 +334,7 @@ sudo apt-get install python-opencv
 
 ```bash
 sudo apt-get install libgeos++
-pip install shapely 
+sudo pip install shapely 
 ```
 
 If you are going to make A tiles (the first approach, described at the top of this post) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).

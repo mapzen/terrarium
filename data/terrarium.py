@@ -1,7 +1,8 @@
-# Author: Patricio Gonzalez Vivo - 2015 (@patriciogv)
+# Authors: @patriciogv & @kevinkreiser
 
 import requests, json, math, os, sys
 import numpy
+import cv2
 from scipy.spatial import Delaunay
 from PIL import Image
 import xml.etree.ElementTree as ET
@@ -124,47 +125,43 @@ def getTrianglesFromPoints(P):
     return triangles
 
 # Given a set of points and height of the same lenght compose a voronoi PNG image
-def makeHeighmap(path, name, size, height_range, points, heights):
-    bbox = getBoundingBox(points)
+def makeHeighmap(path, name, size, points, heights):
+    # bail if it doesnt look right
     total_samples = len(points)
     if total_samples != len(heights):
-        print("Length don't match")
+        print("Lengths don't match")
         return
-    
-    image = Image.new("RGB", (int(size), int(size)))
-    putpixel = image.putpixel
-    imgx, imgy = image.size
-    nx = []
-    ny = []
-    nr = []
-    ng = []
-    nb = []
 
-    # Make samples data
+    # convert mercator to pixels and map pixels to height values
+    bbox = getBoundingBox(points)
+    point_heights = {}
     for i in range(total_samples):
-        nx.append(remap(points[i][0], bbox[0], bbox[1], 0, imgx))
-        ny.append(remap(points[i][1], bbox[2], bbox[3], imgy, 0))
+        x = int(remap(points[i][0], bbox[0], bbox[1], 0, size - 1))
+        y = int(remap(points[i][1], bbox[2], bbox[3], size - 1, 0))
+        point_heights[(x, y)] = heights[i]
 
-        elev_unsigned = int(12000+heights[i])
-        nr.append(int(0))
-        ng.append(int(math.floor(elev_unsigned/255)%255))
-        nb.append(int(math.floor(elev_unsigned%255)))
+    # subdivision from opencv, can do voronoi and its dual the delaunay triangulation
+    subdiv = cv2.Subdiv2D((0, 0, size, size))
+    for p in point_heights.iterkeys():
+        subdiv.insert(p)
+    (facets, centers) = subdiv.getVoronoiFacetList([])
 
-    # Compute Voronoi (one-to-all)
-    # TODO:
-    #   - Improve this... is very expensive 
-    for y in range(imgy):
-        for x in range(imgx):
-            dmin = math.hypot(imgx-1, imgy-1)
-            j = -1
-            for i in range(total_samples):
-                d = math.hypot(nx[i]-x, ny[i]-y)
-                if d < dmin:
-                    dmin = d
-                    j = i
-            putpixel((x, y), (nr[j], ng[j], nb[j]))
+    # an image where we will rasterize the voronoi cells
+    image = numpy.zeros((size, size, 3), dtype = 'uint8')
+    for i in xrange(0, len(facets)):
+        ifacet_arr = []
+        for f in facets[i]:
+            ifacet_arr.append(f)
+        ifacet = numpy.array(ifacet_arr, numpy.int)
+        # the color is the height at the voronoi cite for this cell, offset to bring to unsigned 16bits
+        height = point_heights[(centers[i][0], centers[i][1])] + 32768
+        # to back them into a standard texture we split the high and low order bytes, note the order is G B R
+        color = (int(math.floor(height % 255)), int(math.floor(height / 255) % 255), 0)
+        # we exploit the fact that voronoi cells are convex polygons for faster rasterization
+        cv2.fillConvexPoly(image, ifacet, color, cv2.CV_AA, 0)
 
-    image.save(path+'/'+name+".png", "PNG")
+    # we'll keep the result here
+    cv2.imwrite(path + '/' + name + '.png', image)
 
 # Given a set of points return a valid 
 def getPolygonFromPoints(points):
@@ -260,7 +257,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         heights = getElevationFromPoints(points_latlon)
         heights = getEquilizedHeightByGroup(heights, groups)
         heights_range = getRange(heights)
-        makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, heights_range, points_merc, heights)
+        makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, points_merc, heights)
 
 # Return all the points of a given OSM ID
 def getPointsOfID (osmID):
