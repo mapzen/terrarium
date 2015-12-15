@@ -28,13 +28,6 @@ layers:
             water:
                 order: 0
                 color: white
-    # earth:
-    #     data: { source: osm }
-    #     draw:
-    #         elevate_cls:
-    #             order: 0
-    #             color: '#353535'
-    #             width: 1px
     roads:
         data: { source: osm, layer: roads }
         filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
@@ -107,13 +100,6 @@ layers:
             elevate_cls:
                 order: 0
                 color: '#353535'
-    # wireframe:
-    #     data: { source: terrain, filter: { kind: terrain } }
-    #     draw:
-    #         elevate_lns:
-    #             order: 0
-    #             color: red
-    #             width: 1px
 styles:
     generative-random:
         shaders:

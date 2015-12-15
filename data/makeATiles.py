@@ -6,7 +6,7 @@
 # Thanks to Derek Watkins ( @dwtkns ) for collectiong the data 
 # and making it easy to use in this project http://dwtkns.com/srtm30m/
 
-import json sys
+import json, sys, os
 from common import getStringRangeToArray, getBoundingBox
 from tile import toMercator
 from terrarium import getPointsOfID, makeTilesOfPoints
@@ -18,19 +18,23 @@ ZOOMS = "3-22"
 USGS_URL = "http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/"
 USGS_BBOX_PATH = DATA_PATH+"/srtm30m_bounding_boxes.json"
 
-if (len(sys.argv) > 0):
-	ID = sys.argv[1]
 if (len(sys.argv) > 1):
+	ID = sys.argv[1]
+if (len(sys.argv) > 2):
 	ZOOMS = sys.argv[2]
 
-# TODO
-#	- download tile and bounding box JSON
-# "wget " + USGS_URL + ID + ".SRTMGL1.hgt.zip"
-# "wget http://dwtkns.com/srtm30m/srtm30m_bounding_boxes.json"
-# 	- unzip tile
-# "tar xzvf "+ ID +".SRTMGL1.hgt.zip"
-# 	- convert it to PNG
-# "gdal_translate -ot Int16 -of PNG " + ID ".hgt " + ID + ".png"
+# Create A tile directory
+os.system("mkdir " + DATA_PATH)
+
+# Download tile and bounding box JSON
+os.system("wget " + USGS_URL + ID + ".SRTMGL1.hgt.zip -P " + DATA_PATH)
+os.system("wget http://dwtkns.com/srtm30m/srtm30m_bounding_boxes.json -P " + DATA_PATH)
+
+# Unzip tile
+os.system("cd " + DATA_PATH + " && tar xzvf "+ ID +".SRTMGL1.hgt.zip")
+
+# Convert it to PNG
+os.system("cd " + DATA_PATH + " && gdal_translate -ot Int16 -of PNG " + ID + ".hgt " + ID + ".png")
 
 with open(USGS_BBOX_PATH) as data_file:    
     data = json.load(data_file)
