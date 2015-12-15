@@ -126,7 +126,7 @@ def getTrianglesFromPoints(P):
 
 # Given a set of points and height of the same lenght compose a voronoi PNG image
 def makeHeighmap(path, name, size, points, heights):
-    # bail if it doesnt look write
+    # bail if it doesnt look right
     total_samples = len(points)
     if total_samples != len(heights):
         print("Lengths don't match")
