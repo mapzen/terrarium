@@ -136,8 +136,8 @@ def makeHeighmap(path, name, size, points, heights):
     bbox = getBoundingBox(points)
     point_heights = {}
     for i in range(total_samples):
-        x = remap(points[i][0], bbox[0], bbox[1], 0, size)
-        y = remap(points[i][1], bbox[2], bbox[3], size, 0)
+        x = remap(points[i][0], bbox[0], bbox[1], 0, size - 1)
+        y = remap(points[i][1], bbox[2], bbox[3], size - 1, 0)
         point_heights[(x, y)] = heights[i]
 
     # subdivision from opencv, can do voronoi and its dual the delaunay triangulation
