@@ -231,6 +231,10 @@ Once the terrain is "lit", the terrain looks like this:
 
 ![enlighten terrain](imgs/04-terrain-normals.png)
 
+Once I knew the lightening was right I try some non-realistic shading of it to understand better the use of this information:
+
+![stripes terrain](imgs/07-stripes.jpg)
+
 #### Under water
 
 Using the bounding box of the image we downloaded from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I can construct a big rectangular polygon in which to draw the water level.
