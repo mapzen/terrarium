@@ -395,6 +395,33 @@ This together with a slider updating the position of the uniform ```u_water_heig
 ![flood](imgs/05-flood.gif)
 
 
+#### Using pre shaded vector tiles
+
+Taking advantage of the changes made on Tangram to load raster tiles as per tile textures, is easy to use this images to shade the terrain.
+
+```yaml
+sources:
+		…
+    stamen:
+        type: Raster
+        url: http://spaceclaw.stamen.com/terrain/{z}/{x}/{y}.png
+…
+styles:
+		…
+    elevate_ls:
+        base: polygons
+        mix: [geometry-terrain]
+        shaders:
+            defines:
+                    ZOFFSET: -1
+            blocks:
+                color: |
+                    color.gb = texture2D(u_stamen, getTileCoords()).rgb;
+```
+
+![](imgs/09-stamen.png)
+
+
 ### DONE’s
 
 - Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered to make a C program to do that. https://github.com/mapzen/terrarium/pull/2
