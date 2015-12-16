@@ -422,17 +422,11 @@ styles:
 ![](imgs/09-stamen.png)
 
 
-### DONE’s
-
-- Faster voronoi algorithm: right now each B Tile takes almost a minute to calculate! Kevin offered to make a C program to do that. https://github.com/mapzen/terrarium/pull/2
-
 ### TODO’s
 
-- Implement a texture per tile method on Tangram
+- Add more vertices to compute on the GeoJson geometry tiles using **contour data**, so we are sure there is enough information to cover non urban areas.
 
-- Add more vertices to compute on the GeoJson geometry tiles using contours lines, so we are sure there is enough information to cover non urban areas.
-
-- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifing data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
+- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifying data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
  
 ## Building your own set of terrarium tiles
 
