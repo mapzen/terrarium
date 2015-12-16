@@ -188,6 +188,85 @@ Beside the significant increase in processing time, this changes made the B tile
 
 ![Azulejo 12-655-1582](imgs/06-azulejo-12-655-1582.png) ![Azulejo 13-1310-3166](imgs/06-azulejo-13-1310-3166.png)
 
+I perform a “fast&dirty” modification to [Tangram.js](https://github.com/tangrams/tangram) to load a textures per tile in a similar. Here is [the commit](https://github.com/tangrams/tangram/commit/db5eeea6e60130a3acb0e6931f1dc6f1898d2b00) to in ```src/scene.js``` and ```src/tile.js```. Then by pointing to our tiles path in the yaml scene file:
+
+```yaml
+ sources:
+    ohm:
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
+    terrain:
+        type: GeoJSON
+        url: data/B/{z}-{x}-{y}.json
+    elevation:
+        type: Raster
+        url: data/B/{z}-{x}-{y}.png
+```
+
+Tangram will create and download a texture per tile using that formula and pass it to the ```u_[raster_source_name]``` in this case ```u_elevation```.
+
+The GLSL Code in the style responsable for the extortion got way more clean and simplify:
+
+```yaml
+	geometry-terrain:
+        mix: [space-tile, generative-caustic, geometry-matrices, filter-grain]
+        shaders:
+            uniforms:
+                u_elevation: elevation
+                u_offset: [0, 0]
+                u_water_height: 0.
+            defines:
+                    ZOFFSET: 0
+            blocks:
+                global: |
+                    varying vec3 v_orig_pos;
+
+                    float getHeight() {
+                        vec3 color = texture2D(u_elevation, getTileCoords()).rgb;
+                        if (color.rg != vec2(0.0)) {
+                            return -32768.+color.g*65025.+color.b*255.;
+                        } else {
+                            return -1.0;
+                        }
+                    }
+
+                    void extrudeTerrain(inout vec4 position) {
+                        vec2 pos = position.xy;
+                        float height = getHeight();
+                        if (height != -1.0) {
+                            position.z += height;
+                        }
+                    }
+                position: |
+                    position.z += ZOFFSET*u_meters_per_pixel;
+                    v_orig_pos = position.xyz;
+                    extrudeTerrain(position);
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                color: |
+                    float height = getHeight();
+                    vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+                filter: |
+                    if (height+worldPosition().z < u_water_height) {
+                        color.gb += caustic(worldPosition().xy*0.005)*0.2;
+                    }
+```
+ 
+As you can see the on the above code now the shader only need tile coordinates (```getTileCoords()```) to get the right pixel on the texture. This is how it looks:
+
+![azulejos to geometry](imgs/08-azulejos-to-geom.png)
+
+Unfortunately this progress also bring a new error to solve. Looking closely to the above image you can see some geometry been erroneously extrude close to tile edges
+
+![azulejos to geometry w grid](imgs/08-azulejos-to-geom-grid.png)
+
+This seams to be cause because building vertices tend to exceed the limits of a tile. Once this data is provide to the tile and process by the shader, probably is not finding information outside the tile edges.
+
+Also it seams to be having the opposite problem when there is no vertices close enough to the edges.
+
+![Tile geometry not touching](imgs/08-azulejos-to-geom-error.png)
+
+For the next round of exploration I will consult with [Rob Marianski](https://twitter.com/rmarianski) how to only use the vertices inside a tile and add extra once to fill the spaces.
+
 ### Parallel explorations
 
 #### Normalmap

@@ -10,6 +10,12 @@ sources:
     elevation:
         type: Raster
         url: data/B/{z}-{x}-{y}.png
+    water:
+        type: GeoJSON
+        url: data/A/N37W123.json
+textures:
+    elevation:
+        url:
 scene:
     background: 
         color: '#353535'
@@ -25,7 +31,8 @@ lights:
         ambient: .5
 layers:
     water:
-        data: { source: terrain, filter: { kind: terrain} }
+        # data: { source: terrain, filter: { kind: terrain} }
+        data: { source: water }
         draw:
             water:
                 order: 0
@@ -103,6 +110,56 @@ layers:
                 order: 0
                 color: '#353535'
 styles:
+    space-tile:
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    varying vec3 v_pos;
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+    color-conversion:
+        shaders:
+            blocks:
+                global: |
+                    // Convert from RGB to HSB
+                    // ================================
+                    vec3 rgb2hsb (vec3 c) {
+                        vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+                        vec4 p = mix(vec4(c.bg, K.wz),
+                                     vec4(c.gb, K.xy),
+                                     step(c.b, c.g));
+                        vec4 q = mix(vec4(p.xyw, c.r),
+                                     vec4(c.r, p.yzx),
+                                     step(p.x, c.r));
+                        float d = q.x - min(q.w, q.y);
+                        float e = 1.0e-10;
+                        return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)),
+                                    d / (q.x + e),
+                                    q.x);
+                    }
+                    vec3 rgb2hsb (vec4 c) {
+                        return rgb2hsb(c.rgb);
+                    }
+                    //
+                    // Convert from HSB to RGB by Iñigo Quiles ( https://www.shadertoy.com/view/MsS3Wc )
+                    // ================================
+                    vec3 hsb2rgb (vec3 c) {
+                        vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
+                                                 6.0)-3.0)-1.0,
+                                         0.0,
+                                         1.0 );
+                        rgb = rgb*rgb*(3.0-2.0*rgb);
+                        return c.z * mix(vec3(1.0), rgb, c.y);
+                    }
     generative-random:
         shaders:
             blocks:
@@ -313,49 +370,31 @@ styles:
                     }
     geometry-terrain:
         animated: true
-        mix: [generative-caustic, geometry-matrices, filter-grain]
+        mix: [space-tile, generative-caustic, geometry-matrices, filter-grain]
         shaders:
             uniforms:
-                u_terrain: data/B/12-655-1582.png
-                # u_terrain: data/B/13-1310-3166.png
+                u_elevation: elevation
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
                     ZOFFSET: 0
-                    XMIN: -13629027.821785385
-                    XMAX: -13619243.951739565
-                    YMIN: 4549531.728565961
-                    YMAX: 4559316.2641026
-                    # XMIN: -13629111.31140348
-                    # XMAX: -13623808.050862089
-                    # YMIN: 4544536.609433264
-                    # YMAX: 4549606.384832822
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
 
-                    bool inZone(vec2 _worldPos) {
-                        return  _worldPos.x > XMIN && _worldPos.x < XMAX &&
-                                _worldPos.y > YMIN && _worldPos.y < YMAX;
-                    }
-
-                    float getHeight(vec2 position) {
-                        vec2 worldPos = u_map_position.xy + position.xy;
-                        if (inZone(worldPos)) {
-                            vec2 st = vec2(0.0);
-                            st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
-                            st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
-                            vec3 color = texture2D(u_terrain, st).rgb;
+                    float getHeight() {
+                        vec3 color = texture2D(u_elevation, getTileCoords()).rgb;
+                        if (color.rg != vec2(0.0)) {
                             return -32768.+color.g*65025.+color.b*255.;
                         } else {
-                            return 0.0;
+                            return -1.0;
                         }
                     }
 
                     void extrudeTerrain(inout vec4 position) {
                         vec2 pos = position.xy;
-                        float height = getHeight(pos.xy);
-                        if (height != 0.0) {
+                        float height = getHeight();
+                        if (height != -1.0) {
                             position.z += height;
                         }
                     }
@@ -365,10 +404,10 @@ styles:
                     extrudeTerrain(position);
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 color: |
-                    float height = getHeight(v_orig_pos.xy);
+                    float height = getHeight();
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
                 filter: |
-                    if (inZone(wordPos) && height+worldPosition().z < u_water_height) {
+                    if (height+worldPosition().z < u_water_height) {
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
                     }
     elevate_ply:
@@ -388,25 +427,17 @@ styles:
                     ZOFFSET: 1
     elevate_cls:
         base: polygons
-        mix: [geometry-terrain]
+        mix: [geometry-terrain, color-conversion]
         shaders:
             defines:
                     ZOFFSET: -1
             blocks:
-                global: |
-                    vec3 hsb2rgb( in vec3 c ){
-                        vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
-                                                 6.0)-3.0)-1.0, 
-                                         0.0, 
-                                         1.0 );
-                        rgb = rgb*rgb*(3.0-2.0*rgb);
-                        return c.z * mix( vec3(1.0), rgb, c.y);
-                    }
                 color: |
-                    if (inZone(wordPos)) {
-                        float n_height = (12000.+height)/21000.;
-                        color.rgb = hsb2rgb(vec3((1.-n_height)*.7,n_height,n_height));
-                    }
+                    float n_height = (11000.+height)/22000.;
+                    // color.rgb = hsb2rgb(vec3(.5+(n_height)*.5,n_height,n_height));
+                    vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
+                    //color.rgb = elv;
+                    color.rgb = color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
     water:
         base: polygons
         animated: true
