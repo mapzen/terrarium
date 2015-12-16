@@ -9,7 +9,7 @@ sources:
         url: data/A/N37W123.json
     terrain:
         type: GeoJSON
-        url: data/A/{z}-{x}-{y}.json
+        url: data/B/{z}-{x}-{y}.json
 scene:
     background: 
         color: '#353535'
@@ -55,7 +55,7 @@ layers:
                 color: '#353535'
     roads:
         data: { source: osm, layer: roads }
-        filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
+        filter: { $zoom: {min: 12}, not: { highway: service, kind: [rail, ferry] } }
         draw:
             elevate_lns:
                 order: 0
@@ -335,7 +335,9 @@ styles:
         shaders:
             uniforms:
                 u_terrain: data/A/N37W123.png
+                # u_normalmap: data/A/N37W123-normal-prewitt-3x3.png
                 # u_normalmap: data/A/N37W123-normal-prewitt-5x5.png
+                # u_normalmap: data/A/N37W123-normal-sobel-3x3.png
                 u_normalmap: data/A/N37W123-normal-sobel-5x5.png
                 u_offset: [0, 0]
                 u_water_height: 0.

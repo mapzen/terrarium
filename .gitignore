@@ -1,5 +1,9 @@
 .DS_Store
 data/*.pyc
 data/A/*.json
+data/A/N37W123.*
+data/A/*.hgt
+data/A/*.zip
+data/A/*.xml
 data/B/*.json
 data/B/*.png

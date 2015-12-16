@@ -93,6 +93,7 @@ def getElevationFromPoints(points_merc):
 
     # Make a request and give back the answer (array of points)
     R = requests.post('http://elevation.mapzen.com/height?api_key=%s' % KEY, data=J)
+    print R
     H = json.loads(R.text)['height']
     if (H):
         return H
@@ -110,9 +111,6 @@ def getTrianglesFromPoints(P):
     points = remapPoints(P, bbox, normal)
 
     # Perform a Delaunay tessellation
-    if len(points) < 3:
-        print("Not enought points... no triangles")
-        return []
     delauny = Delaunay(points)
     normalize_tri = delauny.points[delauny.vertices]
 
@@ -222,16 +220,16 @@ def getEquilizedHeightByGroup(heights, groups):
 def makeTile(path, lng, lat, zoom, doPNGs):
     tile = [int(lng), int(lat), int(zoom)]
 
-    print(" Zoom " + str(zoom) + " tile ", tile)
+    # print(" Zoom " + str(zoom) + " tile ", tile)
     name = str(tile[2])+'-'+str(tile[0])+'-'+str(tile[1])
 
     if os.path.isfile(path+'/'+name+".json"):
         if doPNGs:
             if os.path.isfile(path+'/'+name+".png"):
-                print("Tile already created... skiping")
+                print(" Tile " + name+ " already created... skiping")
                 return
         else:
-            print("Tile already created... skiping")
+            print(" Tile " + name+ " already created... skiping")
             return
 
     # Vertices
@@ -245,7 +243,12 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     points_merc = toMercator(points_latlon)
 
     # Tessellate points
+    if ( len(points_latlon) < 3 ):
+        print(" Not enought points on tile " + name + " ... no triangles")
+        return
+
     triangles = getTrianglesFromPoints(points_latlon)
+
     makeGeoJsonFromTriangles(path, name, triangles)
 
     # Elevation
@@ -338,5 +341,5 @@ def makeTilesOfPoints(path, points, zoom, doPNGs):
     for tile in tiles:
         makeTile(path, tile['x'], tile['y'], tile['z'], doPNGs)
         count += 1
-        sys.stdout.write("\r%d%%" % (float(count)/float(total)*100.))
+        sys.stdout.write("\r%d%% " % (float(count)/float(total)*100.))
         sys.stdout.flush()

@@ -6,7 +6,7 @@ sources:
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     terrain:
         type: GeoJSON
-        url: data/A/{z}-{x}-{y}.json
+        url: data/B/{z}-{x}-{y}.json
 scene:
     background: 
         color: white
