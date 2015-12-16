@@ -12,7 +12,7 @@
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
 
-#### Log
+#### Log 
 
 My first approach was to download a heightmap from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/) and simply project the vertices on the vertex shader.
 
@@ -107,7 +107,7 @@ Once the tiles are done and you look at the map in higher zoom levels, a new pro
 The top of the buildings have been extruded according to the heightmap, but in a incongruent way. To fix this issue we developed a new approach.
 
 
-### Approach B: an image per tile
+### Approach B: Azulejos, an image per tile 
 
 #### Data Sources
 
@@ -133,7 +133,7 @@ Checking with [Kevin](https://twitter.com/kevinkreiser) who is in charge of Mapz
 
 ![](imgs/03-EarthHypso.png)
 
-With an approximate range of 9000 to -12000 meters, color channels (GB = 255*255 = 65025) can accommodate this data range. The python script in charge of making the raster elevation tiles now looks like this...
+With an approximate range of -12000 to 9000 meters, color channels (GB = 255*255 = 65025) can accommodate this data range. The python script in charge of making the raster elevation tiles now looks like this...
 
 ```python
 	elev_unsigned = 12000+elevation
@@ -163,6 +163,24 @@ The necessary tiles can be created by running the script with the OSM ID (defaul
 cd data
 python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 ```
+
+### Improvements to B tiles
+
+#### Faster Voronoi Algorith 
+
+[Kevin Kreiser](https://twitter.com/kevinkreiser) improve the voronoi algorithm to rasterize B tiles faster. In his own words, here is the [comment on his PR](https://github.com/mapzen/terrarium/pull/2):
+
+_so to properly display buildings without messing up their rooftops its nice to have an isoheight underneath them. @patriciogonzalezvivo added this by computing the brute force voronoi diagram where the cites were the building vertices, if i understand correctly. he mentioned though that the algorithm was very slow for complex scenes.
+
+So here we let opencv do the heavy work. it has methods which likely use a variant of fortunes algorithm to compute the voronoi diagram (and its dual the delaunay triangulation) in O(nlogn) time. this is way faster than brute force.
+
+another nice thing it does is allow us to rasterize the voronoi cells into a png fairly quickly. we do this by exploiting the fact that voronoi cells are always convex._
+
+Kevin also sugest moving the offset to eliminate negegative numbers to something that makes more sense than ```-12000``` (the lower point on earth) to ```-32768.``` the half of the 16bits range.  You can see this change [here](https://github.com/mapzen/terrarium/commit/63f490ae6b63abd1ead300f9fb3716d8b2cc8f0c#diff-187341f9e9312c2504f99aff18067126R361) and [here](https://github.com/mapzen/terrarium/commit/0130204c705112d842327e7fd761ba163fb7d5c1#diff-f38fabf13cc31a68d6f1714e50779b33R159)
+
+Beside the significant increase in processing time, this changes made the B tiles more brigthter and acuamarin bluish, from that their current name [Azulejos](https://en.wikipedia.org/wiki/Azulejo)
+
+![Azulejo 12-655-1582](imgs/06-azulejo-12-655-1582.png) ![Azulejo 13-1310-3166](imgs/06-azulejo-13-1310-3166.png)
 
 ### Parallel explorations
 
