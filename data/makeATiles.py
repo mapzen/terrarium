@@ -22,6 +22,8 @@ if (len(sys.argv) > 1):
 	ID = sys.argv[1]
 if (len(sys.argv) > 2):
 	ZOOMS = sys.argv[2]
+if (len(sys.argv) > 3):
+	DATA_PATH = sys.argv[3]
 
 # Create A tile directory
 os.system("mkdir " + DATA_PATH)
