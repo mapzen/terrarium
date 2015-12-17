@@ -41,6 +41,9 @@ def getBoundingBox(P):
             max_y = point[1]
     return [min_x, max_x, min_y, max_y]
 
+def isInBoundingBox(point, bbox):
+    return point[0] >= bbox[0] and point[0] <= bbox[1] and point[1] >= bbox[2] and point[1] <= bbox[3]
+
 def remap(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin

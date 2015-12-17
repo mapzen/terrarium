@@ -17,7 +17,7 @@ if (len(sys.argv) > 1):
 if (len(sys.argv) > 2):
 	ZOOMS = sys.argv[2]
 
-# makeTile(DATA_PATH, 655, 1582, 12, True)
+# makeTile(DATA_getTileBoundingBoxATH, 655, 1582, 12, True)
 # makeTile(DATA_PATH, 1310, 3166, 13, True)
 
 points = getPointsOfID(OSM_ID)

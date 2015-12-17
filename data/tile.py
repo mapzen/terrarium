@@ -7,6 +7,46 @@ import math
 
 half_circumference_meters = 20037508.342789244;
 
+# http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+def num2deg(xtile, ytile, zoom):
+    n = 2.0 ** zoom
+    lon_deg = xtile / n * 360.0 - 180.0
+    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+    lat_deg = math.degrees(lat_rad)
+    return (lat_deg, lon_deg)
+
+# http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+def deg2num(lat_deg, lon_deg, zoom):
+    lat_rad = math.radians(lat_deg)
+    n = 2.0 ** zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int(
+        (1.0 - math.log(math.tan(lat_rad) + (1 / math.cos(lat_rad))) / math.pi)
+        / 2.0 * n)
+    return (xtile, ytile)
+
+def getTileBoundingBox(x, y, zoom):
+    topleft_lat, topleft_lng = num2deg(x, y, zoom)
+    bottomright_lat, bottomright_lng = num2deg(
+        x + 1, y + 1, zoom)
+    min_x = topleft_lng
+    min_y = bottomright_lat
+    max_x = bottomright_lng
+    max_y = topleft_lat
+
+    # tile_to_bounds is used to calculate boxes that could be off the grid
+    # clamp the max values in that scenario
+    max_x = min(180, max_x)
+    max_y = min(90, max_y)
+
+    return [min_x, max_x, min_y, max_y]
+
+def getTileMercatorBoundingBox(x, y, zoom):
+    bbox = getTileBoundingBox(x, y, zoom)
+    min = latLngToMeters([bbox[0],bbox[2]])
+    max = latLngToMeters([bbox[1],bbox[3]])
+    return [min[1], min[0], max[1], max[0]]
+
 # Convert lat-lng to mercator meters
 def latLngToMeters(point):
     y = float(point[1]) # Lon
@@ -17,7 +57,7 @@ def latLngToMeters(point):
 
     # Longitude
     x *= half_circumference_meters/180;
-    return [x,y]
+    return [x, y]
 
 # Given a point in mercator meters and a zoom level, return the tile X/Y/Z that the point lies in
 def tileForMeters(points, zoom):
@@ -37,8 +77,6 @@ rangeIn = lambda start, end: range(start, end+1)
 # Return an array of tiles that contain a set of points
 def getTilesForPoints(points, zoom):
     bbox = getBoundingBox(points)
-
-    print bbox
 
     A = tileForMeters(latLngToMeters([bbox[0],bbox[2]]), zoom)
     B = tileForMeters(latLngToMeters([bbox[1],bbox[3]]), zoom)

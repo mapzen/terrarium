@@ -1,4 +1,4 @@
-# Authors: @patriciogv & @kevinkreiser
+# Authors: @patriciogv, @kevinkreiser & @meetar
 
 import requests, json, math, os, sys
 import numpy
@@ -9,8 +9,8 @@ import xml.etree.ElementTree as ET
 import shapely.geometry
 import shapely.geometry.polygon 
 
-from common import getStringRangeToArray, getRange, getBoundingBox, remap, remapPoints
-from tile import getTilesForPoints, toMercator
+from common import getStringRangeToArray, getRange, getBoundingBox, remap, remapPoints, isInBoundingBox
+from tile import getTilesForPoints, toMercator, getTileBoundingBox, getTileMercatorBoundingBox
 
 ELEVATION_RASTER_TILE_SIZE = 256
 
@@ -46,36 +46,53 @@ def getPointsFromTile(x, y, zoom, layers):
 
 def getPointsAndGroupsFromTile(x, y, zoom, layers):
     KEY = "vector-tiles-NPGZu-Q"
+    bbox = getTileBoundingBox(x, y, zoom)
+
     r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
     j = json.loads(r.text)
-    p = [] # Array of points
-    g = [] # Group of vertices with forced height (buildings)
+    P = [] # Array of points
+    G = [] # Group of vertices with forced height (buildings)
+
     for layer in j:
         if layer in layers:
             for features in j[layer]:
                 if features == 'features':
                     for feature in j[layer][features]:
                         if feature['geometry']['type'] == 'LineString':
-                            p.extend(feature['geometry']['coordinates'])                                
+                            P.extend(feature['geometry']['coordinates'])                                
                         elif feature['geometry']['type'] == 'Polygon':
                             for shapes in feature['geometry']['coordinates']:
                                 #  drop the extra vertex
                                 shapes.pop()
                                 if layer == 'buildings':
-                                    g.append([len(p),len(shapes)])
-                                p.extend(shapes)
+                                    points = []
+                                    for point in shapes:
+                                        if isInBoundingBox(point, bbox):
+                                            points.append(point)
+                                    if (len(points) > 0):
+                                        G.append([len(P),len(points)])
+                                        P.extend(points)
+                                else:
+                                    P.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiLineString':
                             for shapes in feature['geometry']['coordinates']:
-                                p.extend(shapes)
+                                P.extend(shapes)
                         elif feature['geometry']['type'] == 'MultiPolygon':
                             for polygon in feature['geometry']['coordinates']:
                                 for shapes in polygon:
                                     #  drop the extra vertex
                                     shapes.pop()
                                     if layer == 'buildings':
-                                        g.append([len(p),len(shapes)])
-                                    p.extend(shapes)
-    return p, g
+                                        points = []
+                                        for point in shapes:
+                                            if isInBoundingBox(point, bbox):
+                                                points.append(point)
+                                        if (len(points) > 0):
+                                            G.append([len(P),len(points)])
+                                            P.extend(points)
+                                    else:
+                                        P.extend(shapes)
+    return P, G
 
 # Given set of points (in spherical mercator) fetch their elevation using Mapzen's Elevation Service
 def getElevationFromPoints(points_merc):
@@ -101,11 +118,11 @@ def getElevationFromPoints(points_merc):
         return []
 
 # Given an array of points (array) tesselate them into triangles
-def getTrianglesFromPoints(P):
+def getTrianglesFromPoints(P, tile):
     # Because of pressition issues spherical mercator points need to be normalize
     # in a bigger range. For that calculate the bounding box and map the points
     # into a normalize range
-    bbox = getBoundingBox(P);
+    bbox = getTileBoundingBox(tile[0], tile[1], tile[2])
     normal = [-10000,10000,-10000,10000]
     points = remapPoints(P, bbox, normal)
 
@@ -122,7 +139,7 @@ def getTrianglesFromPoints(P):
     return triangles
 
 # Given a set of points and height of the same lenght compose a voronoi PNG image
-def makeHeighmap(path, name, size, points, heights):
+def makeHeighmap(path, name, size, points, heights, tile):
     # bail if it doesnt look right
     total_samples = len(points)
     if total_samples != len(heights):
@@ -130,7 +147,9 @@ def makeHeighmap(path, name, size, points, heights):
         return
 
     # convert mercator to pixels and map pixels to height values
+    # bbox = getTileMercatorBoundingBox(tile[0], tile[1], tile[2])
     bbox = getBoundingBox(points)
+
     point_heights = {}
     for i in range(total_samples):
         x = int(remap(points[i][0], bbox[0], bbox[1], 0, size - 1))
@@ -231,7 +250,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
             return
 
     # Vertices
-    layers = ['roads', 'water', 'landuse']  # We should add countours here
+    layers = ['roads', 'earth', 'landuse']  # We should add countours here
     groups = []
     if doPNGs:
         layers.append('buildings');
@@ -245,8 +264,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         print(" Not enought points on tile... nothing to do")
         return
 
-    triangles = getTrianglesFromPoints(points_latlon)
-
+    triangles = getTrianglesFromPoints(points_latlon, tile)
     makeGeoJsonFromTriangles(path, name, triangles)
 
     # Elevation
@@ -258,9 +276,10 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         heights = getElevationFromPoints(points_latlon)
         heights = getEquilizedHeightByGroup(heights, groups)
         heights_range = getRange(heights)
-        makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, points_merc, heights)
+        makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, points_merc, heights, tile)
 
 # Return all the points of a given OSM ID
+# From Peter's https://github.com/tangrams/landgrab
 def getPointsOfID (osmID):
     success = False
     try:
