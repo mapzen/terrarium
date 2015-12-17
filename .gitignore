@@ -7,3 +7,4 @@ data/A/*.zip
 data/A/*.xml
 data/B/*.json
 data/B/*.png
+data/outfile.xml
