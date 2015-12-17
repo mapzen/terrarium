@@ -409,20 +409,11 @@ styles:
 
 ![](imgs/09-stamen.png)
 
+### 12-17-15: Replicating
 
-## TODO’s
+![Raspberry Pi](imgs/10-raspberrypi.jpg)
 
-- Fix glitches on edge tile boundaries
-
-- Add more vertices to compute on the GeoJson geometry tiles using **contour data**, so we are sure there is enough information to cover non urban areas.
-
-- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifying data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
- 
-## Building your own set of terrarium tiles
-
-### Requirements
-
-You should install the following Python modules:
+Today I spend some time to make a script to automatically install the linux packages and python modules:
 
 - [SciPy](http://www.scipy.org/install.html)
 
@@ -441,7 +432,7 @@ sudo pip install requests
 - NumPy:
 
 ```bash
-sudo pip install numpy
+sudo pip install bumpy
 ```
 
 - OpenCV for python:
@@ -456,16 +447,41 @@ sudo apt-get install python-opencv
 sudo apt-get install libgeos++
 sudo pip install shapely 
 ```
+Now I can replicate what’s working on my Raspberry Pi to other linux machine
 
-If you are going to make A tiles (the first approach, described at the top of this post) you should also install [GDAL](https://www.mapbox.com/tilemill/docs/guides/gdal/).
+![Amazon Server](imgs/10-amazon-server.png)
 
-## Making terrarium tiles
+
+## TODO’s
+
+- Fix glitches on edge tile boundaries
+
+- Add more vertices to compute on the GeoJson geometry tiles using **contour data**, so we are sure there is enough information to cover non urban areas.
+
+- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifying data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
+ 
+## Building your own set of terrarium tiles
+
+### Install
 
 ```bash
 cd ~
-git clone —depth 1 https://github.com/patriciogonzalezvivo/terrarium.git
-cd terrarium/data
-python makeTiles.py 111968 3-17
+git clone —depth 1 https://github.com/mapzen/terrarium.git
+cd terrarium
+./install.sh
+```
+
+## Making terrarium tiles
+
+```makeBTiles.py``` require a OSM ID of the place you want to make tiles for it. To get this id go to [openStreetMap](http://www.openstreetmap.org/) and type the name of a city, and search for the number between ```(``` ```)```.
+
+![](imgs/10-OSM.png)
+
+Then pass this number as the first argument of the script, while the third argument is the range of zoom you are interested
+
+```bash
+cd data
+python makeBTiles.py 111968 3-17
 ```
 
 ## How was part of this synergy project?
