@@ -250,7 +250,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
             return
 
     # Vertices
-    layers = ['roads', 'earth', 'landuse']  # We should add countours here
+    layers = ['roads', 'earth', 'water', 'landuse']  # We should add countours here
     groups = []
     if doPNGs:
         layers.append('buildings');
