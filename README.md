@@ -4,9 +4,7 @@
 
 A series of experiments on terrain and elevation data for [Tangram](https://mapzen.com/projects/tangram) ignited by [Patricio Gonzalez Vivo](https://twitter.com/patriciogv) and powered by almost everybody in [Mapzen](http://www.mapzen.com)
 
-## The process behind [azulejos](https://en.wikipedia.org/wiki/Azulejo)
-
-![](imgs/azulejo.jpg)
+## Log
 
 ### 12-04-15: Approach A, One big image to rule them all 
 
