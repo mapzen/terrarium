@@ -108,62 +108,7 @@ Data Sources:
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
 
-### 12-06-15: Approach B: Azulejos, an image per tile 
-
-In order to solve the incongruence on building extrusion I thought it would be beneficial to have control over the heightmap. For that, we need to develop a new set of tiles. Each tile will have a double format of both GeoJSON and PNG images. The first will store the geometries explained on the previous section, plus the addition of building vertices, together with a PNG image that stores the elevation data in a useful and coherent way. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct Voronoi tiled images from them.
-
-![voronoi](imgs/02-voronoi.png) ![voronoi-zoom](imgs/02-voronoi-zoom.png)
-
-The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. In the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest upon, with out distorting the original roof elevation.
-
-![skyline](imgs/02-v-buildings.png)
-
-Because I’m composing the elevation images for each tile, we have way more control and curation of the data. This will allow us to increase the resolution and precision of the tile as we zoom in. But we still have another issue to resolve: Right now the elevation information is passed as a grayscale value, but the elevation range has to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the whole world we need a consistent way to pass this information rather than as a 1 bit value.
-
-Checking with [Kevin](https://twitter.com/kevinkreiser) who is in charge of Mapzen’s elevation service, the elevation data have a precision of 2 bytes. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation) reveals the highest and lowest points on earth.
-
-![](imgs/03-EarthHypso.png)
-
-With an approximate range of -12000 to 9000 meters, color channels (GB = 255*255 = 65025) can accommodate this data range. The python script in charge of making the raster elevation tiles now looks like this...
-
-```python
-	elev_unsigned = 12000+elevation
-	GREEN = math.floor(elev_unsigned/255)%255
-	BLUE = math.floor(elev_unsigned%255)
-``` 
-
-which produces a image that looks like this:
-
-![](imgs/03-colored-elevation.png) ![](imgs/03-colored-elevation-zoom.png)
-
-On the vertex shader we will need to “decode” this value:
-
-```glsl
-	vec3 elev_color = texture2D(u_terrain, st).rgb;
-	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
-
-```
-
-Putting it all together, each tile is rendered into something that looks like this!
-
-![](imgs/03-landscape.png)
-
-The necessary tiles can be created by running the script with the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
-
-```bash
-cd data
-python makeATiles.py [OSM_ID] [ZOOM_RANGE]
-```
-
-Data Sources
-
-* [Mapzen’s elevation data](https://mapzen.com/documentation/elevation/elevation-service/)
-
-* [OpenStreetMap](http://www.openstreetmap.org/)
-
-* [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
-
-#### 12–07-15: Parallel explorations, Normalmap
+#### 12–05-15: Parallel explorations, Normalmap
 
 ![](imgs/04-normalmap.png)
 
@@ -208,7 +153,7 @@ Once I knew the lightening was right I try some non-realistic shading of it to u
 
 ![stripes terrain](imgs/07-stripes.jpg)
 
-### 12–08-15: Parallel explorations, Under water
+### 12–05-15: Parallel explorations, Under water
 
 Using the bounding box of the image we downloaded from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I can construct a big rectangular polygon in which to draw the water level.
 
@@ -288,7 +233,62 @@ This together with a slider updating the position of the uniform ```u_water_heig
 
 ![flood](imgs/05-flood.gif)
 
-### 12-16-15: Improvements to B tiles (azulejos), Faster Voronoi Algorith 
+### 12-08-15: Approach B: Azulejos, an image per tile 
+
+In order to solve the incongruence on building extrusion I thought it would be beneficial to have control over the heightmap. For that, we need to develop a new set of tiles. Each tile will have a double format of both GeoJSON and PNG images. The first will store the geometries explained on the previous section, plus the addition of building vertices, together with a PNG image that stores the elevation data in a useful and coherent way. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct Voronoi tiled images from them.
+
+![voronoi](imgs/02-voronoi.png) ![voronoi-zoom](imgs/02-voronoi-zoom.png)
+
+The idea behind this approach is that vertices will fill ‘cells’ with a similar elevation. In the case of the buildings, all vertices should have the same height, and each cell of each corner will have the same value. This will work as a leveled “platform” for the building to rest upon, with out distorting the original roof elevation.
+
+![skyline](imgs/02-v-buildings.png)
+
+Because I’m composing the elevation images for each tile, we have way more control and curation of the data. This will allow us to increase the resolution and precision of the tile as we zoom in. But we still have another issue to resolve: Right now the elevation information is passed as a grayscale value, but the elevation range has to be hardcoded (look for ```ZMIN``` and ```ZMAX``` in the above code). If we are going to build tiles for the whole world we need a consistent way to pass this information rather than as a 1 bit value.
+
+Checking with [Kevin](https://twitter.com/kevinkreiser) who is in charge of Mapzen’s elevation service, the elevation data have a precision of 2 bytes. A quick check on [wikipedia](https://en.wikipedia.org/wiki/Elevation) reveals the highest and lowest points on earth.
+
+![](imgs/03-EarthHypso.png)
+
+With an approximate range of -12000 to 9000 meters, color channels (GB = 255*255 = 65025) can accommodate this data range. The python script in charge of making the raster elevation tiles now looks like this...
+
+```python
+	elev_unsigned = 12000+elevation
+	GREEN = math.floor(elev_unsigned/255)%255
+	BLUE = math.floor(elev_unsigned%255)
+``` 
+
+which produces a image that looks like this:
+
+![](imgs/03-colored-elevation.png) ![](imgs/03-colored-elevation-zoom.png)
+
+On the vertex shader we will need to “decode” this value:
+
+```glsl
+	vec3 elev_color = texture2D(u_terrain, st).rgb;
+	float height = -12000.0+elev_color.g*65025.+elev_color.b*255.;
+
+```
+
+Putting it all together, each tile is rendered into something that looks like this!
+
+![](imgs/03-landscape.png)
+
+The necessary tiles can be created by running the script with the OSM ID (default: `111968`) and ZOOM RANGE (default: `3-17`)
+
+```bash
+cd data
+python makeATiles.py [OSM_ID] [ZOOM_RANGE]
+```
+
+Data Sources
+
+* [Mapzen’s elevation data](https://mapzen.com/documentation/elevation/elevation-service/)
+
+* [OpenStreetMap](http://www.openstreetmap.org/)
+
+* [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
+
+### 12-16-15: Improvements on azulejos, Faster Voronoi Algorith 
 
 [Kevin Kreiser](https://twitter.com/kevinkreiser) improve the voronoi algorithm to rasterize B tiles faster. In his own words, here is the [comment on his PR](https://github.com/mapzen/terrarium/pull/2):
 
@@ -383,7 +383,7 @@ Also it seams to be having the opposite problem when there is no vertices close 
 
 For the next round of exploration I will consult with [Rob Marianski](https://twitter.com/rmarianski) how to only use the vertices inside a tile and add extra once to fill the spaces.
 
-### 12-16-15: Parallel explorations, Using pre shaded vector tiles
+### 12-16-15: Parallel explorations, Using pre-shaded raster tiles on top of terrain geometry
 
 Taking advantage of the changes made on Tangram to load raster tiles as per tile textures, is easy to use this images to shade the terrain.
 
