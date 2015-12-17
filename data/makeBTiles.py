@@ -13,7 +13,7 @@ OSM_ID = "111968"
 ZOOMS = "3-20"
 
 if (len(sys.argv) > 1):
-	ID = sys.argv[1]
+	OSM_ID = sys.argv[1]
 if (len(sys.argv) > 2):
 	ZOOMS = sys.argv[2]
 if (len(sys.argv) > 3):
