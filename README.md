@@ -8,17 +8,7 @@ A series of experiments on terrain and elevation data for [Tangram](https://mapz
 
 ![](imgs/azulejo.jpg)
 
-### Approach A: One big image to rule them all 
-
-#### Data Sources
-
-* [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/)
-
-* [OpenStreetMap](http://www.openstreetmap.org/)
-
-* [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
-
-#### Log 
+### 12-04-15: Approach A, One big image to rule them all 
 
 My first approach was to download a heightmap from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/) and simply project the vertices on the vertex shader.
 
@@ -112,18 +102,15 @@ Once the tiles are done and you look at the map in higher zoom levels, a new pro
 
 The top of the buildings have been extruded according to the heightmap, but in a incongruent way. To fix this issue we developed a new approach.
 
+Data Sources:
 
-### Approach B: Azulejos, an image per tile 
-
-#### Data Sources
-
-* [Mapzen’s elevation data](https://mapzen.com/documentation/elevation/elevation-service/)
+* [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) through [Derek Watkins’s](https://twitter.com/dwtkns) [tool](http://dwtkns.com/srtm30m/)
 
 * [OpenStreetMap](http://www.openstreetmap.org/)
 
 * [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
 
-#### Log
+### 12-06-15: Approach B: Azulejos, an image per tile 
 
 In order to solve the incongruence on building extrusion I thought it would be beneficial to have control over the heightmap. For that, we need to develop a new set of tiles. Each tile will have a double format of both GeoJSON and PNG images. The first will store the geometries explained on the previous section, plus the addition of building vertices, together with a PNG image that stores the elevation data in a useful and coherent way. For that I will fetch the elevation for just the present vertices using [Mapzen’s elevation service](https://mapzen.com/documentation/elevation/elevation-service/) and construct Voronoi tiled images from them.
 
@@ -170,9 +157,140 @@ cd data
 python makeATiles.py [OSM_ID] [ZOOM_RANGE]
 ```
 
-### Improvements to B tiles
+Data Sources
 
-#### Faster Voronoi Algorith 
+* [Mapzen’s elevation data](https://mapzen.com/documentation/elevation/elevation-service/)
+
+* [OpenStreetMap](http://www.openstreetmap.org/)
+
+* [Mapzen’s vector tiles](https://mapzen.com/projects/vector-tiles)
+
+#### 12–07-15: Parallel explorations, Normalmap
+
+![](imgs/04-normalmap.png)
+
+It is possible to illuminate the surface of the terrain by adding “normal” information to [Tangram](https://github.com/tangrams/tangram)’s light engine. (The [normal](https://mapzen.com/documentation/tangram/Materials-Overview/#normals) of a polygon is a three-dimensional vector describing the direction that it is considered to be facing, which affects the color and shininess of the polygon.)
+
+
+We can make the NormalMap using the HeightMap we got from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the Tangram shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) using [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
+
+```bash
+cd data/
+glslViewer normal.frag A/N37W123.png -o A/N37W123-normal.png
+```
+
+On the fragment shader we can use the following function to retrieve the normal values for each point…
+
+```gals
+vec3 getNormal(vec2 position) {
+	vec2 worldPos = u_map_position.xy + position.xy;
+	if (inZone(worldPos)) {
+		vec2 st = vec2(0.0);
+		st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
+		st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
+		return texture2D(u_normalmap, st).rgb*2.-1.;
+	} else {
+		return vec3(0.,0.,1.);
+	}
+}
+```
+
+and then use it on the YAML scene to modify the normals on the fragment shader:
+
+```yams
+	normal: |
+		normal.gb = getNormal(v_orig_pos.xy);
+```
+
+Once the terrain is “lit”, the terrain looks like this:
+
+![enlighten terrain](imgs/04-terrain-normals.png)
+
+Once I knew the lightening was right I try some non-realistic shading of it to understand better the use of this information:
+
+![stripes terrain](imgs/07-stripes.jpg)
+
+### 12–08-15: Parallel explorations, Under water
+
+Using the bounding box of the image we downloaded from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I can construct a big rectangular polygon in which to draw the water level.
+
+I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function to make it look more “natural”.
+
+![SEM](imgs/sem-sky-0001.jpg)
+
+The code for this ```water``` is the following:
+
+```yams
+    water:
+        base: polygons
+        animated: true
+        mix: [geometry-matrices, filter-grain]
+        blend: inlay
+        material:
+            ambient: .7
+            diffuse:
+                texture: ../imgs/sem-sky-0001.jpg
+                mapping: sphere map
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+                u_water_height: 0.
+            blocks:
+                position: |
+                    position.z += u_water_height;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                normal: |
+                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
+                filter: |
+                    color.a *= .9;
+```
+
+Then on the rest of the geometry I apply the following [caustic filter](https://en.wikipedia.org/wiki/Caustic_(optics)) to everything that above the water level. 
+
+```yams
+
+        shaders:
+            defines:
+                TAU: 6.28318530718
+                MAX_ITER: 3
+            blocks:
+                global: |
+                    // Caustic effect from https://www.shadertoy.com/view/4ljXWh
+                    vec3 caustic (vec2 uv) {
+                        vec2 p = mod(uv*TAU, TAU)-250.0;
+                        float time = u_time * .5+23.0;
+                        vec2 i = vec2(p);
+                        float c = 1.0;
+                        float intent = .005;
+                        for (int n = 0; n < int(MAX_ITER); n++) {
+                            float t = time * (1.0 - (3.5 / float(n+1)));
+                            i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+                            c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+                        }
+                        c /= float(MAX_ITER);
+                        c = 1.17-pow(c, 1.4);
+                        vec3 color = vec3(pow(abs(c), 8.0));
+                        color = clamp(color + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
+                        color = mix(color, vec3(1.0,1.0,1.0),0.3);
+                        return color;
+                    }
+                     
+                filter: |
+										vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+                    if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
+                        color.gb += caustic(worldPosition().xy*0.005)*0.2;
+                    }
+```
+
+All of this makes the water looks like this:
+
+![under water](imgs/05-underwater.png)
+
+This together with a slider updating the position of the uniform ```u_water_height``` allows a nice interactive animation of  the sea levels rising:
+
+![flood](imgs/05-flood.gif)
+
+### 12-16-15: Improvements to B tiles (azulejos), Faster Voronoi Algorith 
 
 [Kevin Kreiser](https://twitter.com/kevinkreiser) improve the voronoi algorithm to rasterize B tiles faster. In his own words, here is the [comment on his PR](https://github.com/mapzen/terrarium/pull/2):
 
@@ -267,135 +385,7 @@ Also it seams to be having the opposite problem when there is no vertices close 
 
 For the next round of exploration I will consult with [Rob Marianski](https://twitter.com/rmarianski) how to only use the vertices inside a tile and add extra once to fill the spaces.
 
-### Parallel explorations
-
-#### Normalmap
-
-![](imgs/04-normalmap.png)
-
-It is possible to illuminate the surface of the terrain by adding "normal" information to [Tangram](https://github.com/tangrams/tangram)’s light engine. (The [normal](https://mapzen.com/documentation/tangram/Materials-Overview/#normals) of a polygon is a three-dimensional vector describing the direction that it is considered to be facing, which affects the color and shininess of the polygon.)
-
-
-We can make the NormalMap using the HeightMap we got from the [Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/) using GIMP or the Tangram shader [here](https://github.com/patriciogonzalezvivo/terrarium/blob/master/data/normal.frag) using [glslViewer](https://github.com/patriciogonzalezvivo/glslViewer) like this:
-
-```bash
-cd data/
-glslViewer normal.frag A/N37W123.png -o A/N37W123-normal.png
-```
-
-On the fragment shader we can use the following function to retrieve the normal values for each point...
-
-```glsl
-vec3 getNormal(vec2 position) {
-	vec2 worldPos = u_map_position.xy + position.xy;
-	if (inZone(worldPos)) {
-		vec2 st = vec2(0.0);
-		st.x = (worldPos.x-XMIN)/(XMAX-XMIN);
-		st.y = (worldPos.y-YMIN)/(YMAX-YMIN);
-		return texture2D(u_normalmap, st).rgb*2.-1.;
-	} else {
-		return vec3(0.,0.,1.);
-	}
-}
-```
-
-and then use it on the YAML scene to modify the normals on the fragment shader:
-
-```yaml
-	normal: |
-		normal.gb = getNormal(v_orig_pos.xy);
-```
-
-Once the terrain is "lit", the terrain looks like this:
-
-![enlighten terrain](imgs/04-terrain-normals.png)
-
-Once I knew the lightening was right I try some non-realistic shading of it to understand better the use of this information:
-
-![stripes terrain](imgs/07-stripes.jpg)
-
-#### Under water
-
-Using the bounding box of the image we downloaded from Shuttle Radar Topography Mission](http://www2.jpl.nasa.gov/srtm/), I can construct a big rectangular polygon in which to draw the water level.
-
-I use a [Spherical Environmental Map](http://www.ozone3d.net/tutorials/glsl_texturing_p04.php) on it together with some fragment shader code to disturb the normals using a regular simplex noise function to make it look more "natural".
-
-![SEM](imgs/sem-sky-0001.jpg)
-
-The code for this ```water``` is the following:
-
-```yaml
-    water:
-        base: polygons
-        animated: true
-        mix: [geometry-matrices, filter-grain]
-        blend: inlay
-        material:
-            ambient: .7
-            diffuse:
-                texture: ../imgs/sem-sky-0001.jpg
-                mapping: sphere map
-        shaders:
-            uniforms:
-                u_offset: [0, 0]
-                u_water_height: 0.
-            blocks:
-                position: |
-                    position.z += u_water_height;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
-                normal: |
-                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
-                filter: |
-                    color.a *= .9;
-```
-
-Then on the rest of the geometry I apply the following [caustic filter](https://en.wikipedia.org/wiki/Caustic_(optics)) to everything that above the water level. 
-
-```yaml
-
-        shaders:
-            defines:
-                TAU: 6.28318530718
-                MAX_ITER: 3
-            blocks:
-                global: |
-                    // Caustic effect from https://www.shadertoy.com/view/4ljXWh
-                    vec3 caustic (vec2 uv) {
-                        vec2 p = mod(uv*TAU, TAU)-250.0;
-                        float time = u_time * .5+23.0;
-                        vec2 i = vec2(p);
-                        float c = 1.0;
-                        float intent = .005;
-                        for (int n = 0; n < int(MAX_ITER); n++) {
-                            float t = time * (1.0 - (3.5 / float(n+1)));
-                            i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-                            c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
-                        }
-                        c /= float(MAX_ITER);
-                        c = 1.17-pow(c, 1.4);
-                        vec3 color = vec3(pow(abs(c), 8.0));
-                        color = clamp(color + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
-                        color = mix(color, vec3(1.0,1.0,1.0),0.3);
-                        return color;
-                    }
-                     
-                filter: |
-										vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
-                    if (inZone(wordPos) && ZMIN+height*(ZMAX-ZMIN)+worldPosition().z < u_water_height) {
-                        color.gb += caustic(worldPosition().xy*0.005)*0.2;
-                    }
-```
-
-All of this makes the water looks like this:
-
-![under water](imgs/05-underwater.png)
-
-This together with a slider updating the position of the uniform ```u_water_height``` allows a nice interactive animation of  the sea levels rising:
-
-![flood](imgs/05-flood.gif)
-
-
-#### Using pre shaded vector tiles
+### 12-16-15: Parallel explorations, Using pre shaded vector tiles
 
 Taking advantage of the changes made on Tangram to load raster tiles as per tile textures, is easy to use this images to shade the terrain.
 
@@ -422,7 +412,9 @@ styles:
 ![](imgs/09-stamen.png)
 
 
-### TODO’s
+## TODO’s
+
+- Fix glitches on edge tile boundaries
 
 - Add more vertices to compute on the GeoJson geometry tiles using **contour data**, so we are sure there is enough information to cover non urban areas.
 
@@ -478,7 +470,7 @@ cd terrarium/data
 python makeTiles.py 111968 3-17
 ```
 
-## How work on this?
+## How was part of this synergy project?
 
 - [Patricio Gonzalez Vivo](https://twitter.com/patriciogv): Came up with the first round of A and B tiles ideas
 
