@@ -3,8 +3,9 @@
 os=$(uname)
 arq=$(uname -m)
 
+apps_common="tmux mc htop vim zsh wget curl imagemagick "
 apps_osx="python opencv"
-apps_linux="libgeos++ python-dev python-opencv libjpeg-dev libjpeg8-dev libpng3 libfreetype6-dev python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose" 
+apps_linux="gdal-bin libgeos++ python-dev python-opencv libjpeg-dev libjpeg8-dev libpng3 libfreetype6-dev python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose" 
 python_modules="pil request shapely"
 
 #   Install Applications
@@ -15,7 +16,11 @@ if [ $os == "Linux" ]; then
     sudo apt-get update
     sudo apt-get upgrade
 
-    # on RaspberryPi
+    #  add the PPA to your sources
+    sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable && sudo apt-get update
+
+    # install linux applications
+    sudo apt-get install $apps_common
     sudo apt-get install $apps_linux
 
     # Install Python need files
@@ -35,6 +40,7 @@ elif [ $os == "Darwin" ]; then
 
     brew update
     brew upgrade
+    brew install $apps_common
     brew install $apps_osx
 fi
 
