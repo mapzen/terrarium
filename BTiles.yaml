@@ -120,7 +120,7 @@ styles:
                     // Get the coordinates in tile space
                     // ================================
                     vec2 getTileCoords() {
-                        return v_pos.xy;
+                        return fract(v_pos.xy);
                     }
 
                 position: |
