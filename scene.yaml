@@ -469,7 +469,8 @@ styles:
         shaders:
             blocks:
                 color: |
-                    if (height+worldPosition().z > u_water_height) {
+                    height = getHeight();
+                    if (height > u_water_height) {
                         vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
                         float e = -32768.+elv.g*65025.+elv.b*255.;
                         e = min(e/500.,1.);
