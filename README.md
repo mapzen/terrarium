@@ -447,7 +447,8 @@ sudo apt-get install python-opencv
 sudo apt-get install libgeos++
 sudo pip install shapely 
 ```
-Now I can replicate what’s working on my Raspberry Pi to other linux machine
+
+Now using the script [```install.sh```](https://github.com/mapzen/terrarium/blob/master/install.sh) I can replicate what was working on my Raspberry Pi to any other linux machine :)
 
 ![Amazon Server](imgs/10-amazon-server.png)
 

@@ -6,10 +6,10 @@ sources:
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     water:
         type: GeoJSON
-        url: data/A/N37W123.json
+        url: //52.70.150.13/data/A/N37W123.json
     terrain:
         type: GeoJSON
-        url: data/B/{z}-{x}-{y}.json
+        url: //52.70.150.13/data/B/{z}-{x}-{y}.json
 scene:
     background: 
         color: '#353535'

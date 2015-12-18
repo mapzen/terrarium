@@ -6,13 +6,13 @@ sources:
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     terrain:
         type: GeoJSON
-        url: data/B/{z}-{x}-{y}.json
+        url: //52.70.150.13/data/B/{z}-{x}-{y}.json
     elevation:
         type: Raster
-        url: data/B/{z}-{x}-{y}.png
+        url: //52.70.150.13/data/B/{z}-{x}-{y}.png
     water:
         type: GeoJSON
-        url: data/A/N37W123.json
+        url: //52.70.150.13/data/A/N37W123.json
 textures:
     elevation:
         url:
@@ -31,12 +31,34 @@ lights:
         ambient: .5
 layers:
     water:
-        # data: { source: terrain, filter: { kind: terrain} }
-        data: { source: water }
+        data: { source: osm }
+        filter: { $zoom: { max: 13 } }
+        draw:
+            fixwater:
+                order: 0
+                color: white
+    earth:
+        data: { source: osm }
+        filter: { $zoom: { max: 13 } }
+        draw:
+            elevate_water:
+                order: 0
+                color: '#353535'
+                width: 1px
+    sealevel:
+        data: { source: terrain, filter: { kind: terrain} }
+        filter: { kind: terrain, $zoom: { min: 13 } }
         draw:
             water:
                 order: 0
                 color: white
+    terrain:
+        data: { source: terrain }
+        filter: { $zoom: { min: 13 } }
+        draw:
+            elevate_cls:
+                order: 0
+                color: '#353535'
     roads:
         data: { source: osm, layer: roads }
         filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
@@ -103,12 +125,6 @@ layers:
                 order: 0
                 color: '#999'
                 extrude: true
-    terrain:
-        data: { source: terrain }
-        draw:
-            elevate_cls:
-                order: 0
-                color: '#353535'
 styles:
     space-tile:
         shaders:
@@ -370,7 +386,7 @@ styles:
                     }
     geometry-terrain:
         animated: true
-        mix: [space-tile, generative-caustic, geometry-matrices, filter-grain]
+        mix: [space-tile, geometry-matrices, filter-grain]
         shaders:
             uniforms:
                 u_elevation: elevation
@@ -409,6 +425,10 @@ styles:
                 color: |
                     float height = getHeight();
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+    elevate_base:
+        mix: [geometry-terrain, generative-caustic]
+        shaders:
+            blocks:
                 filter: |
                     if (height+worldPosition().z < u_water_height) {
                         color.rgb *= 0.5;
@@ -416,7 +436,7 @@ styles:
                     }
     elevate_ply:
         base: polygons
-        mix: [geometry-terrain]
+        mix: [elevate_base]
         shaders:
             defines:
                     ZOFFSET: 0
@@ -425,23 +445,56 @@ styles:
                     color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
     elevate_lns:
         base: lines
-        mix: [geometry-terrain]
+        mix: [elevate_base]
         shaders:
             defines:
-                    ZOFFSET: 1
+                    ZOFFSET: .1
     elevate_cls:
         base: polygons
-        mix: [geometry-terrain, color-conversion]
+        mix: [elevate_base, color-conversion]
         shaders:
             defines:
                     ZOFFSET: -1
             blocks:
                 color: |
                     float n_height = (11000.+height)/22000.;
-                    // color.rgb = hsb2rgb(vec3(.5+(n_height)*.5,n_height,n_height));
                     vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                    //color.rgb = elv;
                     color.rgb = color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
+    elevate_water:
+        base: polygons
+        animated: true
+        mix: [geometry-terrain, color-conversion]
+        shaders:
+            blocks:
+                color: |
+                    if (height+worldPosition().z > u_water_height) {
+                        float n_height = (11000.+height)/22000.;
+                        vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
+                        color.rgb = color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
+                    } else {
+                        color.rgb = vec3(0.412,0.475,0.537);
+                    }
+#   WATER STYLE
+    fixwater:
+        base: polygons
+        animated: true
+        mix: [geometry-matrices, filter-grain]
+        blend: inlay
+        material:
+            ambient: .7
+            diffuse:
+                texture: ../imgs/sem-sky-0001.jpg
+                mapping: spheremap
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                position: |
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                normal: |
+                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
+                filter: |
+                    color.a *= .9;
     water:
         base: polygons
         animated: true
