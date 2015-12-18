@@ -411,6 +411,7 @@ styles:
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
                 filter: |
                     if (height+worldPosition().z < u_water_height) {
+                        color.rgb *= 0.5;
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
                     }
     elevate_ply:
