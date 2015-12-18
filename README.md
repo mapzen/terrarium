@@ -490,11 +490,16 @@ And finally we can appreciate building with flat roofs.
 
 ## TODO’s
 
-- Fix glitches on edge tile boundaries
+- Instad of re use the terrain geometry for the water, make a big big tile of the size of the hole earth to draw less triangles
+
+- Make shaders more efficient: probably take out noise and fbm functions for grain effect and stuff.
+
+- Make geometry more efficient: Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifying data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
 
 - Add more vertices to compute on the GeoJson geometry tiles using **contour data**, so we are sure there is enough information to cover non urban areas.
 
-- Under zoom level 12, geoJSON tiles are too big (~10mb in the worst scenario). These zoom levels may not need so much definition for the terrain geometry. Simplifying data coming from elevation contours and heightmap/normalmap may be enough. Contour/roads data is enough until between 1-14 as the buildings are too small to be visible. Or maybe just heightmap/normalmap is enough as users don’t really see the terrain under 12.
+- Solve over drawing
+
  
 ## Building your own set of terrarium tiles
 
