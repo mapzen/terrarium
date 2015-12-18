@@ -120,7 +120,7 @@ styles:
                     // Get the coordinates in tile space
                     // ================================
                     vec2 getTileCoords() {
-                        return fract(v_pos.xy);
+                        return v_pos.xy;
                     }
 
                 position: |
@@ -383,7 +383,9 @@ styles:
                     varying vec3 v_orig_pos;
 
                     float getHeight() {
-                        vec3 color = texture2D(u_elevation, getTileCoords()).rgb;
+                        vec2 st = getTileCoords();
+                        st = clamp(st,vec2(0.0),vec2(1.));
+                        vec3 color = texture2D(u_elevation, st).rgb;
                         if (color.rg != vec2(0.0)) {
                             return -32768.+color.g*65025.+color.b*255.;
                         } else {
