@@ -397,6 +397,7 @@ styles:
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
+                    varying vec3 v_final_pos;
 
                     float getHeight() {
                         vec2 st = getTileCoords();
@@ -419,10 +420,11 @@ styles:
                     position.z += ZOFFSET*u_meters_per_pixel;
                     v_orig_pos = position.xyz;
                     extrudeTerrain(position);
+                    v_final_pos = position.xyz;
                     position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 color: |
-                    float height = getHeight();
-                    vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+                    float height = v_final_pos.z;
+                    float n_height = height/500.;
 
     ##################################################################   ELEVATION STYLES 
     elevate_base:
@@ -430,8 +432,8 @@ styles:
         shaders:
             blocks:
                 filter: |
-                    if (height+worldPosition().z < u_water_height) {
-                        color.rgb *= 0.5;
+                    if (height < u_water_height) {
+                        color.rgb *= 1.0-fract(n_height);
                         color.rgb += caustic(worldPosition().xy*0.005)*0.2;
                     }
     elevate_ply:
@@ -457,10 +459,9 @@ styles:
                     ZOFFSET: -1
             blocks:
                 color: |
-                    float n_height = (11000.+height)/22000.;
-                    vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                    color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
-                    // color.rg = getTileCoords();
+                    color.rgb = hsb2rgb(vec3((1.-n_height)*.7,.5+n_height,.2+n_height));
+                    //vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
+                    //color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
     elevate_water:
         base: polygons
         animated: true
@@ -469,9 +470,10 @@ styles:
             blocks:
                 color: |
                     if (height+worldPosition().z > u_water_height) {
-                        float n_height = (11000.+height)/22000.;
                         vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                        color.rgb = color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
+                        float e = -32768.+elv.g*65025.+elv.b*255.;
+                        e = min(e/500.,1.);
+                        color.rgb = hsb2rgb(vec3((1.-e)*.7,.5+e,.2+e));
                     } else {
                         color.rgb = vec3(0.412,0.475,0.537);
                     }
@@ -517,4 +519,4 @@ styles:
                 normal: |
                     normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
                 filter: |
-                    color.a *= .9;
+                    color.a *= .7;
