@@ -452,6 +452,41 @@ Now using the script [```install.sh```](https://github.com/mapzen/terrarium/blob
 
 ![Amazon Server](imgs/10-amazon-server.png)
 
+### 18–05-15: Fixing glitch on tile edges
+
+Finally fixed the tile-edge glitch which was made by two different reasons. There was extra geometry been constructed from building vertices outside the tile boundaries, and a problem with the ```modelPosition()``` output on ```getTileCoords()```. Now that module looks like this:
+
+```yaml
+styles:
+		…
+    space-tile:
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    varying vec3 v_pos;
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return vec2(v_pos.x, 1.+v_pos.y);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+		…
+```
+
+Previously the presence of a ```fract()``` function was wrapping around what seams to be negative values from ```modelPosition().y```. 
+
+Now tiles stitch perfectly between each other:
+
+![](imgs/11-fixed-tile-edges-00.png) 
+
+And finally we can appreciate building with flat roofs.
+
+![](imgs/11-fixed-tile-edges-01.png) 
 
 ## TODO’s
 

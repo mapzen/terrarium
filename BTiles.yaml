@@ -10,9 +10,6 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
-    water:
-        type: GeoJSON
-        url: //52.70.150.13/data/A/N37W123.json
 textures:
     elevation:
         url:
@@ -30,6 +27,7 @@ lights:
         diffuse: .7
         ambient: .5
 layers:
+    ##################################################################   FAR AWAY ZOOMs
     water:
         data: { source: osm }
         filter: { $zoom: { max: 13 } }
@@ -45,6 +43,7 @@ layers:
                 order: 0
                 color: '#353535'
                 width: 1px
+    ##################################################################   CLOSE UP ZOOMs (> 12)
     sealevel:
         data: { source: terrain, filter: { kind: terrain} }
         filter: { kind: terrain, $zoom: { min: 13 } }
@@ -126,6 +125,7 @@ layers:
                 color: '#999'
                 extrude: true
 styles:
+    ##################################################################   MODULES
     space-tile:
         shaders:
             blocks:
@@ -136,7 +136,7 @@ styles:
                     // Get the coordinates in tile space
                     // ================================
                     vec2 getTileCoords() {
-                        return fract(v_pos.xy);
+                        return vec2(v_pos.x, 1.+v_pos.y);
                     }
 
                 position: |
@@ -400,8 +400,6 @@ styles:
 
                     float getHeight() {
                         vec2 st = getTileCoords();
-                        //st.x = clamp(st.x, 0., 1.);
-                        //st.y = clamp(st.y, 0., 1.);
                         vec3 color = texture2D(u_elevation, st).rgb;
                         if (color.rg != vec2(0.0)) {
                             return -32768.+color.g*65025.+color.b*255.;
@@ -425,6 +423,8 @@ styles:
                 color: |
                     float height = getHeight();
                     vec2 wordPos = u_map_position.xy + v_orig_pos.xy;
+
+    ##################################################################   ELEVATION STYLES 
     elevate_base:
         mix: [geometry-terrain, generative-caustic]
         shaders:
@@ -459,7 +459,8 @@ styles:
                 color: |
                     float n_height = (11000.+height)/22000.;
                     vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                    color.rgb = color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
+                    color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
+                    // color.rg = getTileCoords();
     elevate_water:
         base: polygons
         animated: true
@@ -474,7 +475,7 @@ styles:
                     } else {
                         color.rgb = vec3(0.412,0.475,0.537);
                     }
-#   WATER STYLE
+    ##################################################################  WATER STYLE
     fixwater:
         base: polygons
         animated: true
