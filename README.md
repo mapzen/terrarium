@@ -525,7 +525,7 @@ cd data
 python makeBTiles.py 111968 3-17
 ```
 
-## How was part of this synergy project?
+## Who was part of this synergy project?
 
 - [Patricio Gonzalez Vivo](https://twitter.com/patriciogv): Came up with the first round of A and B tiles ideas
 
