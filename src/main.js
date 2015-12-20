@@ -80,6 +80,16 @@ function init() {
     map.on('mouseup', function () {
         bMousePressed = false;
     });
+
+    setTimeout(function() {
+        var hud = document.getElementById("hud");
+
+        if (scene.config.sources['water']) {
+            hud.innerHTML += '<div id="level"> <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/> <div id="level_display">0</div> </div>';
+        }
+        
+        hud.innerHTML += '<div id="orbit"> <input type="checkbox" name="checkbox-option" id="orbit_button" class="hide-checkbox" value="orbit_button" checked> <label onclick="orbitChange()">Orbit</label> </div>';
+    }, 5000);
 }
 
 function levelChange(value) {
