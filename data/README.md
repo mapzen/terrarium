@@ -66,3 +66,4 @@ Others:
 * London: 65606
 * Barcelona: 347950
 * Los Angeles: 207359
+* Tokyo: 265018692
