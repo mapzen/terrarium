@@ -1,0 +1,29 @@
+#map {
+    background: white;
+}
+
+#hud {
+    color: black;
+}
+
+.hide-checkbox + label {
+    color: black;
+    background-color: rgba(0,0,0,0.0);
+    -webkit-transition: background-color 0.3s ease-in-out;
+    -moz-transition: background-color 0.3s ease-in-out;
+    -o-transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.hide-checkbox:checked + label {
+    background-color: black;
+    color: white;
+}
+
+#level_display {
+    color: black;
+}
+
+input[type='range']:nth-of-type(1) {
+  color: black;
+}

@@ -84,12 +84,27 @@ function init() {
     setTimeout(function() {
         var hud = document.getElementById("hud");
 
-        if (scene.config.sources['water']) {
-            hud.innerHTML += '<div id="level"> <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/> <div id="level_display">0</div> </div>';
+        if ( scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined ) {
+            hud.innerHTML += '  <div id="level">' +
+                             '      <div id="level_display">0</div>' +
+                             '      <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/>' +
+                             '  </div>';
         }
-        
         hud.innerHTML += '<div id="orbit"> <input type="checkbox" name="checkbox-option" id="orbit_button" class="hide-checkbox" value="orbit_button" checked> <label onclick="orbitChange()">Orbit</label> </div>';
-    }, 5000);
+
+        if ( JSON.stringify(scene.background.color) === "[1,1,1,1]") {
+            console.log('Load Light theme');
+            loadCSS('css/light.css');
+        }
+    }, 1000);
+}
+
+ function loadCSS(filename) {
+    var fileref = document.createElement("link")
+    fileref.setAttribute("rel", "stylesheet")
+    fileref.setAttribute("type", "text/css")
+    fileref.setAttribute("href", filename)
+    document.getElementsByTagName("head")[0].appendChild(fileref)
 }
 
 function levelChange(value) {

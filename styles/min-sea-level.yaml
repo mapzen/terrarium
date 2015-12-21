@@ -11,8 +11,6 @@ sources:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
 textures:
-    sky_sem:
-        url: https://cdn.rawgit.com/mapzen/terrarium/gh-pages/imgs/sem-sky-0001.jpg
     elevation:
         url:
 scene:
@@ -26,16 +24,16 @@ lights:
     directional1:
         type: directional
         direction: [.1, .5, -1]
+        specular: .5
         diffuse: .7
         ambient: .5
 layers:
     water:
         data: { source: osm }
         draw:
-            elevate_lns:
+            fix_water:
                 order: 1
-                color: gray
-                width: 1px
+                color: [.2,.2,.2]
     terrain:
         data: { source: terrain }
         draw:
@@ -154,13 +152,23 @@ styles:
                             vec3(sin(psi),cos(psi),0.),
                             vec3(0.,0.,1.));
                     }
+    tilt:
+        animated: true
+        mix: [geometry-matrices]
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                position: |
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
     geometry-terrain:
         animated: true
-        mix: [space-tile, geometry-matrices]
+        mix: [space-tile]
         shaders:
             uniforms:
                 u_elevation: elevation
                 u_offset: [0, 0]
+                u_water_height: 0.
             defines:
                     ZOFFSET: 0
             blocks:
@@ -190,25 +198,27 @@ styles:
                     v_orig_pos = position.xyz;
                     extrudeTerrain(position);
                     v_final_pos = position.xyz;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 normal: |
                     float height = v_final_pos.z;
                     float n_height = height/500.;
     ##################################################################   ELEVATION STYLES 
     elevate_base:
-        mix: [geometry-terrain]
+        mix: [geometry-terrain, tilt]
         shaders:
-            defines:
-                    ZOFFSET: 0
+            blocks:
+                color: |
+                    height = getHeight();
+                    if (height < u_water_height) {
+                        color.rgb = vec3(0.5);
+                    }
+                    color.rgb *= vec3(min((height*.001 + .5),1.));
     elevate_ply:
         base: polygons
         mix: [elevate_base]
         shaders:
-            defines:
-                    ZOFFSET: 0
             blocks:
                 color: |
-                    color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
+                    //color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
     elevate_lns:
         base: lines
         mix: [elevate_base]
@@ -227,3 +237,6 @@ styles:
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
                     normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
                     #endif
+    fix_water:
+        base: polygons
+        mix: [tilt]

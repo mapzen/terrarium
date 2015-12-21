@@ -21,15 +21,18 @@ body {
     font-family: 'Jura', Helvetica, Arial, sans-serif;
     position: absolute;
     top: 5px;
-    right: -9.1875em;
+    right: 0px;
+    /*right: -9.1875em;*/
     color: white;
+    width: 100px;
 }
 
 #orbit {
     position: relative;
-    right: -10em;
-    top: -3.1875em;
-    width: 4.1875em;
+    /*right: -10em;*/
+    /*top: -3.1875em;*/
+    /*width: 4.1875em;*/
+    width: 70px;
 }
 
 .hide-checkbox {
@@ -65,19 +68,25 @@ body {
     flex-direction: column;
     justify-content: center;
     margin: 0;
-    min-width: 24.1875em;
-    min-height: 24.1875em;
+    position: relative;
+    top: 0px;
+    left: -125px;
+    width: 100px;
+    height: 300px;
 }
 
 #level_display {
     position: relative;
-    right: -11.1875em;
-    top: -12.1875em;
+    top: -100px;
+    left: 140px;
+    color: white;
+    /*right: -11.1875em;*/
+    /*top: -12.1875em;*/
 }
 
 input[type='range'] {
     transform: rotate(-90deg);
-    align-self: center;
+    /*align-self: center;*/
     border: solid 0 transparent;
     border-width: 0 1.25em;
     padding: 0;
