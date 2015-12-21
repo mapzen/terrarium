@@ -1,0 +1,35 @@
+Nagoya, 4576938
+Xiamen, 244082165
+Bangkok, 92277
+Boston, 2315704
+Saint Petersburg, 421007
+Zhenjiang, 244083006
+Surat, 1952514
+Chennai, 3233393892
+Abidjan, 3377982
+Jakarta, 29939632
+New Orleans, 131885
+Ho Chi Minh City, 1973756
+New York City, 175905
+Tianjin, 912999
+Miami, 1216769
+Guayaquil, 3652281
+Kolkata, 1971802
+Mumbai, 16173235
+Guangzhou City, 3287346
+Cape Town, 32675806
+Bangladesh, 184640
+Marshall Islands, 571771
+Japan, 382313
+Lima, 1944670
+San Francisco, 111968
+Rio de Janeiro, 2697338
+Seoul, 2297418
+Cairo, 5466227
+Paris, 7444
+Istanbul, 1882099475
+Buenos Aires, 1224652
+London, 65606
+Barcelona, 347950
+Los Angeles, 207359
+Tokyo, 265018692
