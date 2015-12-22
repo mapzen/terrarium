@@ -86,7 +86,7 @@ function init() {
 
         if ( scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined ) {
             hud.innerHTML += '  <div id="level">' +
-                             '      <div id="level_display">0</div>' +
+                             '      <div id="level_display">0.0m</div>' +
                              '      <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/>' +
                              '  </div>';
         }
