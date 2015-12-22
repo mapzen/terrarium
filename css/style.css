@@ -92,7 +92,7 @@ input[type='range'] {
     padding: 0;
     width: 16.05em;
     height: 4.65em;
-    opacity: .65;
+    /*opacity: .65;*/
     background: linear-gradient(90deg, #808080 0.05em, rgba(0, 0, 0, 0) 0.05em) repeat-x 0 2.1em content-box;
     background-size: 0.5em 1em;
     font-size: 1em;
@@ -182,6 +182,7 @@ input[type='range']::-webkit-slider-runnable-track:after, input[type='range'] /d
   right: 0;
   left: auto;
 }
+
 input[type='range']::-webkit-slider-thumb:before, input[type='range'] /deep/ #thumb:before {
   position: absolute;
   top: 50%;
@@ -199,13 +200,13 @@ input[type='range']::-webkit-slider-thumb:before, input[type='range'] /deep/ #th
 input[type='range']:nth-of-type(1) {
   color: white;
 }
+/*
 input[type='range']:nth-of-type(1)::-ms-fill-lower {
   background: linear-gradient(90deg, currentColor 0.05em, rgba(0, 0, 0, 0) 0.05em) repeat-x 0 100%;
   background-size: 0.5em 1em;
-}
+}*/
 input[type='range']:focus {
   outline: none;
-  opacity: .99;
 }
 
 /* Chrome/ Opera */

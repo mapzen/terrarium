@@ -10,17 +10,12 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
-    water:
-        type: GeoJSON
-        url: ../data/water.json
 textures:
-    sky_sem:
-        url: https://cdn.rawgit.com/mapzen/terrarium/gh-pages/imgs/sem-sky-0001.jpg
     elevation:
         url:
 scene:
     background: 
-        color: '#353535'
+        color: white
 cameras:
     camera1:
         type: perspective
@@ -32,37 +27,18 @@ lights:
         diffuse: .7
         ambient: .5
 layers:
-    ##################################################################   FAR AWAY ZOOMs
     water:
         data: { source: osm }
-        filter: { $zoom: { max: 13 } }
         draw:
-            fixwater:
+            fix_water:
                 order: 0
-                color: white
-    earth:
-        data: { source: osm }
-        filter: { $zoom: { max: 13 } }
-        draw:
-            elevate_water:
-                order: 0
-                color: '#353535'
-                width: 1px
-    ##################################################################   CLOSE UP ZOOMs (> 12)
-    sealevel:
-        data: { source: water }
-        filter: { kind: water, $zoom: { min: 13 } }
-        draw:
-            water:
-                order: 0
-                color: white
+                color: [.2,.2,.2]
     terrain:
         data: { source: terrain }
-        filter: { $zoom: { min: 13 } }
         draw:
             elevate_cls:
                 order: 0
-                color: '#353535'
+                color: white
     roads:
         data: { source: osm, layer: roads }
         filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
@@ -127,7 +103,7 @@ layers:
         draw:
             elevate_ply:
                 order: 0
-                color: '#999'
+                color: white
                 extrude: true
 styles:
     ##################################################################   MODULES
@@ -147,166 +123,6 @@ styles:
                 position: |
                     // Normalize the attribute position of a vertex
                     v_pos = modelPosition().xyz;
-    color-conversion:
-        shaders:
-            blocks:
-                global: |
-                    // Convert from RGB to HSB
-                    // ================================
-                    vec3 rgb2hsb (vec3 c) {
-                        vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-                        vec4 p = mix(vec4(c.bg, K.wz),
-                                     vec4(c.gb, K.xy),
-                                     step(c.b, c.g));
-                        vec4 q = mix(vec4(p.xyw, c.r),
-                                     vec4(c.r, p.yzx),
-                                     step(p.x, c.r));
-                        float d = q.x - min(q.w, q.y);
-                        float e = 1.0e-10;
-                        return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)),
-                                    d / (q.x + e),
-                                    q.x);
-                    }
-                    vec3 rgb2hsb (vec4 c) {
-                        return rgb2hsb(c.rgb);
-                    }
-                    //
-                    // Convert from HSB to RGB by Iñigo Quiles ( https://www.shadertoy.com/view/MsS3Wc )
-                    // ================================
-                    vec3 hsb2rgb (vec3 c) {
-                        vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
-                                                 6.0)-3.0)-1.0,
-                                         0.0,
-                                         1.0 );
-                        rgb = rgb*rgb*(3.0-2.0*rgb);
-                        return c.z * mix(vec3(1.0), rgb, c.y);
-                    }
-    generative-random:
-        shaders:
-            blocks:
-                global: |
-                    // 1D Random for 1 and 2 dimentions
-                    // ================================
-                    float random(float x){ return fract(sin(x)*43758.5453);}
-                    float random(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
-                    //
-                    // 2D Random for 2 dimentions
-                    // ================================
-                    vec2 random2 (vec2 xy) { return fract(sin(vec2(dot(xy,vec2(127.1,311.7)),dot(xy,vec2(269.5,183.3))))*43758.5453); }
-                    //
-                    // 3D Random for 2 dimentions
-                    // ================================
-                    vec3 random3 (vec2 xy) { return fract(sin(vec3( dot(xy,vec2(127.1,311.7)), dot(xy,vec2(269.5,183.3)), dot(xy,vec2(419.2,371.9)) ))*43758.5453); }
-                    vec3 random3 (vec3 c) {
-                        float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));
-                        vec3 r;
-                        r.z = fract(512.0*j);
-                        j *= .125;
-                        r.x = fract(512.0*j);
-                        j *= .125;
-                        r.y = fract(512.0*j);
-                        return r-0.5;
-                    }
-    generative-noise:
-        mix: generative-random
-        shaders:
-            blocks:
-                global: |
-                    // 1D Value Noise for 1, 2 and 3 dimentions
-                    // ================================
-                    float noise (in float x) {
-                        float i = floor(x);
-                        float f = fract(x);
-                        float u = f * f * (3.0 - 2.0 * f);
-                        return mix(random(i), random(i + 1.0), u);
-                    }
-                    float noise (vec2 xy) {
-                        vec2 i = floor(xy);
-                        vec2 f = fract(xy);
-                        float a = random(i);
-                        float b = random(i + vec2(1.0, 0.0));
-                        float c = random(i + vec2(0.0, 1.0));
-                        float d = random(i + vec2(1.0, 1.0));
-                        vec2 u = f * f * (3.0 - 2.0 * f);
-                        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-                    }
-                    float noise (vec3 xyz) {
-                        const vec3 step = vec3(110.0, 241.0, 171.0);
-                        vec3 i = floor(xyz);
-                        vec3 f = fract(xyz);
-                        float n = dot(i, step);
-                        vec3 u = f * f * (3.0 - 2.0 * f);
-                        return mix( mix(mix(random(n + dot(step, vec3(0,0,0))),
-                                            random(n + dot(step, vec3(1,0,0))),
-                                            u.x),
-                                        mix(random(n + dot(step, vec3(0,1,0))),
-                                            random(n + dot(step, vec3(1,1,0))),
-                                            u.x),
-                                        u.y),
-                                    mix(mix(random(n + dot(step, vec3(0,0,1))),
-                                        random(n + dot(step, vec3(1,0,1))),
-                                        u.x),
-                                        mix(random(n + dot(step, vec3(0,1,1))),
-                                            random(n + dot(step, vec3(1,1,1))),
-                                            u.x),
-                                    u.y),
-                                u.z);
-                    }
-                    //
-                    // Simplex Noise
-                    //
-                    const float F3 =  0.3333333;
-                    const float G3 =  0.1666667;
-                    float snoise (vec3 p) {
-                        vec3 s = floor(p + dot(p, vec3(F3)));
-                        vec3 x = p - s + dot(s, vec3(G3));
-                        vec3 e = step(vec3(0.0), x - x.yzx);
-                        vec3 i1 = e*(1.0 - e.zxy);
-                        vec3 i2 = 1.0 - e.zxy*(1.0 - e);
-                        vec3 x1 = x - i1 + G3;
-                        vec3 x2 = x - i2 + 2.0*G3;
-                        vec3 x3 = x - 1.0 + 3.0*G3;
-                        vec4 w, d;
-                        w.x = dot(x, x);
-                        w.y = dot(x1, x1);
-                        w.z = dot(x2, x2);
-                        w.w = dot(x3, x3);
-                        w = max(0.6 - w, 0.0);
-                        d.x = dot(random3(s), x);
-                        d.y = dot(random3(s + i1), x1);
-                        d.z = dot(random3(s + i2), x2);
-                        d.w = dot(random3(s + 1.0), x3);
-                        w *= w;
-                        w *= w;
-                        d *= w;
-                        return dot(d, vec4(52.0));
-                    }
-    generative-caustic:
-        shaders:
-            defines:
-                TAU: 6.28318530718
-                MAX_ITER: 3
-            blocks:
-                global: |
-                    // Caustic effect from https://www.shadertoy.com/view/4ljXWh
-                    vec3 caustic (vec2 uv) {
-                        vec2 p = mod(uv*TAU, TAU)-250.0;
-                        float time = u_time * .5+23.0;
-                        vec2 i = vec2(p);
-                        float c = 1.0;
-                        float inten = .005;
-                        for (int n = 0; n < int(MAX_ITER); n++) {
-                            float t = time * (1.0 - (3.5 / float(n+1)));
-                            i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-                            c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
-                        }
-                        c /= float(MAX_ITER);
-                        c = 1.17-pow(c, 1.4);
-                        vec3 color = vec3(pow(abs(c), 8.0));
-                        color = clamp(color + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
-                        color = mix(color, vec3(1.0,1.0,1.0),0.3);
-                        return color;
-                    }
     geometry-matrices:
         shaders:
             defines:
@@ -337,14 +153,14 @@ styles:
                     }
     geometry-terrain:
         animated: true
-        mix: [space-tile, geometry-matrices]
+        mix: [space-tile]
         shaders:
             uniforms:
                 u_elevation: elevation
                 u_offset: [0, 0]
                 u_water_height: 0.
             defines:
-                    ZOFFSET: 0
+                ZOFFSET: 0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
@@ -372,103 +188,105 @@ styles:
                     v_orig_pos = position.xyz;
                     extrudeTerrain(position);
                     v_final_pos = position.xyz;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
-                color: |
+                normal: |
                     float height = v_final_pos.z;
-                    float n_height = height/500.;
-
-    ##################################################################   ELEVATION STYLES 
-    elevate_base:
-        mix: [geometry-terrain, generative-caustic]
+    tilt:
+        animated: true
+        mix: [geometry-matrices]
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                position: |
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+    grids-grid:
         shaders:
             blocks:
-                filter: |
-                    if (height < u_water_height) {
-                        color.rgb *= 1.0-fract(n_height);
-                        color.rgb += caustic(worldPosition().xy*0.005)*0.2;
+                global: |
+                    // Draw a grid in the space a specific resolution and pressition
+                    bool grid(vec2 st, float res, float press){
+                        vec2 grid = fract(st*res);
+                        return grid.x < res*press || grid.y < res*press;
                     }
+                    //
+                    // Draw a grid in the space a specific resolution
+                    bool grid(vec2 st, float res){
+                        return grid(st, res, 1.0);
+                    }
+    grids-tile:
+        mix: [space-tile, grids-grid]
+        shaders:
+            blocks:
+                global: |
+                    // Draw a grid using tile coordenates in a specific resolution
+                    float tileGrid(float res){
+                        vec2 st = getTileCoords()*100.*res;
+                        float pct = 0.0;
+                        float press = 0.4+(1.0-fract(u_map_position.z))*0.1;
+                        if (grid(st,0.01,press)) pct += 0.5;
+                        if (grid(st,0.1,press)) pct += 0.1;
+                        return pct;
+                    }
+                    // Draw two grid that smoothly interpolates acording to zooms
+                    float tileGrid(){ 
+                        return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
+                    }
+    ##################################################################  FIX WATER
+    fix_water:
+        base: polygons
+        mix: [tilt, grids-tile]
+        shaders:
+            defines:
+                ZOFFSET: 10.
+            blocks:
+                position: |
+                    position.z += ZOFFSET*u_meters_per_pixel;
+                color: |
+                    color.rgb += vec3(.2)*tileGrid();
+    ##################################################################  ELEVATION STYLES 
+    elevate_base:
+        mix: [geometry-terrain, tilt]
     elevate_ply:
         base: polygons
         mix: [elevate_base]
         shaders:
-            defines:
-                    ZOFFSET: 0
             blocks:
                 color: |
-                    color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
+                    if (height < u_water_height) {
+                        color.rgb *= .5;
+                    }
+                filter: |
+                    color.rgb *= vec3(min((height*.001 + .5),1.))*1.3;
     elevate_lns:
         base: lines
-        mix: [elevate_base]
+        mix: [geometry-terrain, tilt]
         shaders:
             defines:
-                    ZOFFSET: .1
-    elevate_cls:
-        base: polygons
-        mix: [elevate_base, color-conversion]
-        shaders:
-            defines:
-                    ZOFFSET: -1
-            blocks:
-                color: |
-                    color.rgb = hsb2rgb(vec3((1.-n_height)*.7,.5+n_height,.2+n_height));
-                    //vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                    //color.rgb = hsb2rgb(vec3(elv.b,n_height,elv.g));
-    elevate_water:
-        base: polygons
-        animated: true
-        mix: [geometry-terrain, color-conversion]
-        shaders:
+                ZOFFSET: .2
             blocks:
                 color: |
                     height = getHeight();
-                    if (height > u_water_height) {
-                        vec3 elv = texture2D(u_elevation, getTileCoords()).rgb;
-                        float e = -32768.+elv.g*65025.+elv.b*255.;
-                        e = min(e/500.,1.);
-                        color.rgb = hsb2rgb(vec3((1.-e)*.7,.5+e,.2+e));
-                    } else {
-                        color.rgb = vec3(0.412,0.475,0.537);
+                    if (height < u_water_height) {
+                        color.rgb *= .5;
                     }
-    ##################################################################  WATER STYLE
-    fixwater:
-        base: polygons
-        animated: true
-        mix: [geometry-matrices, generative-noise]
-        blend: inlay
-        material:
-            ambient: .7
-            diffuse:
-                texture: sky_sem
-                mapping: spheremap
-        shaders:
-            uniforms:
-                u_offset: [0, 0]
-            blocks:
-                position: |
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
-                normal: |
-                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
                 filter: |
-                    color.a *= .9;
-    water:
+                    color.rgb *= 1.5;
+    elevate_cls:
         base: polygons
-        animated: true
-        mix: [geometry-matrices, generative-noise]
-        blend: inlay
-        material:
-            ambient: .7
-            diffuse:
-                texture: sky_sem
-                mapping: spheremap
+        mix: [elevate_base]
         shaders:
-            uniforms:
-                u_offset: [0, 0]
-                u_water_height: 0.
+            extensions: OES_standard_derivatives
+            defines:
+                    ZOFFSET: -1
             blocks:
-                position: |
-                    position.z += u_water_height;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
                 normal: |
-                    normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
+                    #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
+                    normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    #endif
+                color: |
+                    height = getHeight();
+                    if (height < u_water_height) {
+                        color.rgb *= .5;
+                    }
                 filter: |
-                    color.a *= .7;
+                    color.rgb *= vec3(min((height*.001 + .5),1.));

@@ -8,11 +8,7 @@
 
 .hide-checkbox + label {
     color: black;
-    background-color: rgba(0,0,0,0.0);
-    -webkit-transition: background-color 0.3s ease-in-out;
-    -moz-transition: background-color 0.3s ease-in-out;
-    -o-transition: background-color 0.3s ease-in-out;
-    transition: background-color 0.3s ease-in-out;
+    background-color: white;
 }
 
 .hide-checkbox:checked + label {
@@ -22,6 +18,9 @@
 
 #level_display {
     color: black;
+    background-color: white;
+    width: 50px;
+    text-align: center;
 }
 
 input[type='range']:nth-of-type(1) {
