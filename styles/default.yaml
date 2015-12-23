@@ -372,7 +372,7 @@ styles:
                     v_orig_pos = position.xyz;
                     extrudeTerrain(position);
                     v_final_pos = position.xyz;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
                 color: |
                     float height = v_final_pos.z;
                     float n_height = height/500.;
@@ -445,7 +445,7 @@ styles:
                 u_offset: [0, 0]
             blocks:
                 position: |
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
                 normal: |
                     normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
                 filter: |
@@ -467,7 +467,7 @@ styles:
             blocks:
                 position: |
                     position.z += u_water_height;
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
                 normal: |
                     normal += snoise(vec3(worldPosition().xy*0.08,u_time*.5))*0.02;
                 filter: |

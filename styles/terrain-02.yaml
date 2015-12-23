@@ -13,98 +13,57 @@ sources:
 textures:
     elevation:
         url:
+    sem:
+        url: ../imgs/sem-metal-0012.jpg
+    sem_spec:
+        url: https://cdn.rawgit.com/mapzen/terrarium/gh-pages/imgs/sem-sky-0001.jpg
 scene:
     background: 
-        color: white
+        color: black
+lights:
+    point_1:
+        type: point
+        position: [0.,0.,1000px]
+        origin: ground
+        diffuse: 1.
+        ambient: 0
+        specular: .5
 cameras:
     camera1:
         type: perspective
         vanishing_point: [0, -500]
-lights:
-    directional1:
-        type: directional
-        direction: [.1, .5, -1]
-        diffuse: .7
-        ambient: .5
 layers:
     water:
         data: { source: osm }
+        filter: { kind: [riverbank, dock, water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
+        draw:
+            elevate_lns:
+                order: 1
+                color: white
+                width: 1px
+    ocean:
+        data: { source: osm, layer: water }
         draw:
             fix_water:
-                order: 0
-                color: [.2,.2,.2]
+                order: 1
+                color: [0.1,0.1,0.1]
+    earth:
+        data: { source: osm }
+        draw:
+            elevate_lns:
+                order: 1
+                color: white
+                width: 2px
     terrain:
         data: { source: terrain }
         draw:
             elevate_cls:
                 order: 0
                 color: white
-    roads:
-        data: { source: osm, layer: roads }
-        filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
-        draw:
-            elevate_lns:
-                order: 0
-                color: [.7,.7,.7]
-                width: [[6,0px], [7,.25px], [10, .5px], [15, .75px], [17, 5m]]
-        highway:
-            filter: { kind: highway }
-            draw:
-                elevate_lns:
-                    order: 1
-                    color: [.8,.8,.8]#[1.000,0.897,0.058]
-                    width: [[1,0px], [6,.25px], [11, 2px], [14, 3px], [16, 4px], [17, 10m]]
-            link:
-                filter: { is_link: yes } # on- and off-ramps, etc
-                draw:
-                    elevate_lns:
-                        color: [.7,.7,.7]#[1.000,0.933,0.710]
-                        width: [[10,0px], [14, 3px], [16, 5px], [18, 10m]]
-                tunnel-link:
-                    filter: {is_tunnel: yes, $zoom: {min: 13} }
-                    draw:
-                        elevate_lns:
-                            color: [.5,.5,.5]#[0.805,0.748,0.557]
-            tunnel:
-                filter: {is_tunnel: yes, $zoom: {min: 13} }
-                draw:
-                    elevate_lns:
-                        order: -1
-                        color: [.5,.5,.5]#[0.805,0.748,0.557]
-        major_road:
-            filter: { kind: major_road }
-            draw:
-                elevate_lns:
-                    color: [[13, [.6,.6,.6]], [17, white]]
-                    width: [[1,0px], [6,.5px], [11,1px], [14, 2px], [16, 2.5px], [19, 8m]]
-                    primary:
-                        filter: { highway: primary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [11, 1.5px], [13, 2.5px], [16, 2.5px], [19, 8m]]
-                    secondary:
-                        filter: { highway: secondary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [13, 1.5px], [14, 2.5px], [16, 2.5px], [19, 8m]]
-                    tertiary:
-                        filter: { highway: tertiary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [13, .75px], [14, 2.5px], [16, 2.5px], [19, 8m]]
-        path:
-            filter: { kind: path }
-            draw:
-                elevate_lns:
-                    color: [0.8, 0.8, 0.8]
-                    width: [[14,.1px],[16,.5px], [17, 2m]]
-    buildings:
-        data: { source: osm }
-        draw:
-            elevate_ply:
-                order: 0
-                color: white
-                extrude: true
+            # elevate_lns:
+            #     order: 0
+            #     color: gray
+            #     width: 1px
 styles:
     ##################################################################   MODULES
     space-tile:
@@ -158,7 +117,6 @@ styles:
             uniforms:
                 u_elevation: elevation
                 u_offset: [0, 0]
-                u_water_height: 0.
             defines:
                 ZOFFSET: 0
             blocks:
@@ -190,6 +148,7 @@ styles:
                     v_final_pos = position.xyz;
                 normal: |
                     float height = v_final_pos.z;
+                    float n_height = height/500.;
     tilt:
         animated: true
         mix: [geometry-matrices]
@@ -199,6 +158,16 @@ styles:
             blocks:
                 position: |
                     position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
+    rim_light:
+        shaders:
+            blocks:
+                global: |
+                    vec3 rim (vec3 normal, float pct) {
+                        float cosTheta = abs( dot( vec3(0.0,0.0,-1.0) , normal));
+                        return vec3( pct * ( 1. - smoothstep( 0.0, 1., cosTheta ) ) );
+                    }
+                filter: |
+                    color.rgb += rim(normal, .3);
     grids-grid:
         shaders:
             blocks:
@@ -214,7 +183,7 @@ styles:
                         return grid(st, res, 1.0);
                     }
     grids-tile:
-        mix: [space-tile, grids-grid]
+        mix: [grids-grid]
         shaders:
             blocks:
                 global: |
@@ -231,62 +200,53 @@ styles:
                     float tileGrid(){ 
                         return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
                     }
-    ##################################################################  FIX WATER
-    fix_water:
-        base: polygons
-        mix: [tilt, grids-tile]
-        shaders:
-            defines:
-                ZOFFSET: 10.
-            blocks:
-                position: |
-                    position.z += ZOFFSET*u_meters_per_pixel;
-                color: |
-                    color.rgb += vec3(.2)*tileGrid();
     ##################################################################  ELEVATION STYLES 
     elevate_base:
+        shaders:
         mix: [geometry-terrain, tilt]
     elevate_ply:
         base: polygons
         mix: [elevate_base]
-        shaders:
-            blocks:
-                color: |
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
-                filter: |
-                    color.rgb *= vec3(min((height*.001 + .5),1.))*1.3;
+        material:
+            ambient: .5
+            specular:
+                texture: sky_sem
+                mapping: spheremap
+            diffuse:
+                texture: sky_sem
+                mapping: spheremap
     elevate_lns:
         base: lines
         mix: [geometry-terrain, tilt]
+        lighting: false
         shaders:
             defines:
-                ZOFFSET: .2
-            blocks:
-                color: |
-                    height = getHeight();
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
-                filter: |
-                    color.rgb *= 1.5;
+                ZOFFSET: 1.
     elevate_cls:
         base: polygons
-        mix: [elevate_base]
+        mix: [elevate_base, rim_light]
+        material:
+            diffuse:
+                texture: sem
+                mapping: spheremap
+            specular:
+                texture: sem_spec
+                mapping: spheremap
+            shininess: 2.
         shaders:
             extensions: OES_standard_derivatives
-            defines:
-                    ZOFFSET: -1
             blocks:
                 normal: |
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
                     normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    normal.rgb = normal.rgb*2.-1.;
+                    normal.rgb = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * normal.rgb;
+                    normal.rgb = normal.rgb*.5+.5;
                     #endif
+    fix_water:
+        base: polygons
+        mix: [elevate_base, grids-tile]
+        shaders:
+            blocks:
                 color: |
-                    height = getHeight();
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
-                filter: |
-                    color.rgb *= vec3(min((height*.001 + .5),1.));
+                    color.rgb += vec3(.2)*tileGrid();

@@ -214,7 +214,7 @@ styles:
                 u_offset: [0, 0]
             blocks:
                 position: |
-                    position.xyz = rotateX3D(abs(cos(u_offset.x))*1.3) * rotateZ3D(cos(u_offset.y)*1.57075) * position.xyz;
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
     grids-grid:
         shaders:
             blocks:

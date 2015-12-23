@@ -1,7 +1,13 @@
 // Author: @patriciogv 2015
 var bMousePressed = false;
 var gui;
-var controls = {offset: [0.5,0], offset_target: [0.5, 0, 16], orbit: true, water_height: 0}
+var controls = {
+    offset: [0.5,0], 
+    offset_target: [0.5, 0, 16], 
+    water_height: 0,
+    orbit: true, 
+    manual: false
+};
 
 
 // ============================================= INIT 
@@ -60,7 +66,7 @@ map = (function () {
 
 function init() {
     layer.on('init', function() {    
-        window.setInterval("update(getCurrentTime())", 100);
+        window.setInterval("update()", 100);
     });
     layer.addTo(map);
 
@@ -69,10 +75,11 @@ function init() {
     }
 
     document.addEventListener('mousemove', onMouseUpdate, false);
+
     // document.body.ondrag
     map.on('mousedown', function () {
         bMousePressed = true;
-        orbitUpdate(false);
+        setControl("orbit", false);
         controls.offset_target[0] = .5;
         controls.offset_target[1] = 0;
     });
@@ -82,63 +89,18 @@ function init() {
     });
 
     setTimeout(function() {
-        var hud = document.getElementById("hud");
-
-        if ( scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined ) {
-            hud.innerHTML += '  <div id="level">' +
-                             '      <div id="level_display">0.0m</div>' +
-                             '      <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/>' +
-                             '  </div>';
-        }
-        hud.innerHTML += '<div id="orbit"> <input type="checkbox" name="checkbox-option" id="orbit_button" class="hide-checkbox" value="orbit_button" checked> <label onclick="orbitChange()">Orbit</label> </div>';
-
-        if ( JSON.stringify(scene.background.color) === "[1,1,1,1]") {
-            console.log('Load Light theme');
-            loadCSS('css/light.css');
-        }
+        initUI();
     }, 1000);
 }
 
- function loadCSS(filename) {
-    var fileref = document.createElement("link")
-    fileref.setAttribute("rel", "stylesheet")
-    fileref.setAttribute("type", "text/css")
-    fileref.setAttribute("href", filename)
-    document.getElementsByTagName("head")[0].appendChild(fileref)
-}
-
-function levelChange(value) {
-    value *= 2.;
-    for (var style in scene.styles) {
-        if (scene.styles[style] &&
-            scene.styles[style].shaders &&
-            scene.styles[style].shaders.uniforms &&
-            scene.styles[style].shaders.uniforms.u_water_height !== undefined) {
-            scene.styles[style].shaders.uniforms.u_water_height = value;
-        }
-    }
-    var displ = document.getElementById("level_display");
-    displ.innerHTML = value.toFixed(1) + "m";
-}
-
-function orbitChange() {
-    orbitUpdate(!controls.orbit);
-}
-
-function orbitUpdate(value) {
-    controls.orbit = value;
-    var button = document.getElementById("orbit_button");
-    button.checked = controls.orbit;
-}
-
-function update(time) {   // time in seconds since Jan. 01, 1970 UTC
+function update() {
     var speed = .01;
 
     if (bMousePressed) {
         speed = .3;
     }
 
-    if (controls.orbit) {
+    if (getControl("orbit")) {
         var d = new Date();
         var t = d.getTime()/1000;
         controls.offset_target[0] = .5+Math.abs(Math.sin(t*0.025));
@@ -146,7 +108,7 @@ function update(time) {   // time in seconds since Jan. 01, 1970 UTC
         controls.offset_target[2] = 18+Math.sin(Math.PI*.25+t*0.02)*2.5;
     }
 
-    var target = [(Math.PI/2.-controls.offset_target[1]*Math.PI/4.), controls.offset_target[0]*Math.PI];
+    var target = [(Math.PI/2.-controls.offset_target[1]*Math.PI/2.), controls.offset_target[0]*Math.PI];
     if (target[0] !== controls.offset[0] || target[1] !== controls.offset[1]) {
         controls.offset[0] += (target[0] - controls.offset[0])*speed;
         controls.offset[1] += (target[1] - controls.offset[1])*speed;      
@@ -163,17 +125,12 @@ function update(time) {   // time in seconds since Jan. 01, 1970 UTC
     // map.setZoom( map.getZoom()+(offset_target[2]-map.getZoom())*speed*0.5 );
 }
 
-// ============================================= SET/GET
-function getCurrentTime() {   // time in seconds since Jan. 01, 1970 UTC
-  return Math.round(new Date().getTime()/1000);
-}
-
 // ============================================= EVENT
 function onMouseUpdate (e) {
-    // if (!bMousePressed) {
-    //     controls.offset_target[0] = 0.;//e.pageX/screen.width;
-    //     controls.offset_target[1] = 1.;//(e.pageY/screen.height);
-    // }
+    if (!bMousePressed && getControl("manual")) {
+        controls.offset_target[0] = Math.max(0.,Math.min(1.,e.pageX/screen.width));
+        controls.offset_target[1] = 1.-Math.max(0.,Math.min(1.,e.pageY/screen.height));
+    }
 }
 
 function onMotionUpdate (e) {

@@ -27,12 +27,13 @@ body {
     width: 100px;
 }
 
-#orbit {
+.button {
     position: relative;
     /*right: -10em;*/
     /*top: -3.1875em;*/
     /*width: 4.1875em;*/
     width: 70px;
+    height: 25px;
 }
 
 .hide-checkbox {
