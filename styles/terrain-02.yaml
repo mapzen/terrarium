@@ -38,7 +38,7 @@ layers:
         filter: { kind: [riverbank, dock, water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
         draw:
             elevate_lns:
-                order: 1
+                order: 0
                 color: white
                 width: 1px
     ocean:
