@@ -9,10 +9,10 @@ import xml.etree.ElementTree as ET
 import shapely.geometry
 import shapely.geometry.polygon 
 
-from common import getStringRangeToArray, getRange, getBoundingBox, remap, remapPoints, isInBoundingBox
+from common import getStringRangeToArray, getRange, getBoundingBox, remap, remapPoints, remapIPoints, isInBoundingBox
 from tile import getTilesForPoints, toMercator, getTileBoundingBox, getTileMercatorBoundingBox
 
-ELEVATION_RASTER_TILE_SIZE = 256
+TILE_DEFINITION = 256
 
 # Given a tile coordinate get the points using Mapzen's Vector Tiles service
 def getPointsFromTile(x, y, zoom, layers):
@@ -123,8 +123,12 @@ def getTrianglesFromPoints(P, tile):
     # in a bigger range. For that calculate the bounding box and map the points
     # into a normalize range
     bbox = getTileBoundingBox(tile[0], tile[1], tile[2])
-    normal = [-10000,10000,-10000,10000]
-    points = remapPoints(P, bbox, normal)
+    # normal = [-10000,10000,-10000,10000]
+
+    in_edge = TILE_DEFINITION/2;
+    out_edge = TILE_DEFINITION/2-1;
+
+    points = remapIPoints(P, bbox, [-in_edge,in_edge,-in_edge,in_edge])
 
     # Perform a Delaunay tessellation
     delauny = Delaunay(points)
@@ -134,7 +138,7 @@ def getTrianglesFromPoints(P, tile):
     triangles = []
     for triangle in normalize_tri:
         if len(triangle) == 3:
-            triangles.append(remapPoints(triangle, normal, bbox));
+            triangles.append(remapPoints(triangle, [-out_edge,out_edge,-out_edge,out_edge], bbox));
 
     return triangles
 
@@ -264,7 +268,9 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         print(" Not enought points on tile... nothing to do")
         return
 
+    # print "Vertices " + str(len(points_latlon))
     triangles = getTrianglesFromPoints(points_latlon, tile)
+    # print "Triangles " + str(len(triangles))
     makeGeoJsonFromTriangles(path, name, triangles)
 
     # Elevation
@@ -276,7 +282,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         heights = getElevationFromPoints(points_latlon)
         heights = getEquilizedHeightByGroup(heights, groups)
         heights_range = getRange(heights)
-        makeHeighmap(path, name, ELEVATION_RASTER_TILE_SIZE, points_merc, heights, tile)
+        makeHeighmap(path, name, TILE_DEFINITION, points_merc, heights, tile)
 
 # Return all the points of a given OSM ID
 # From Peter's https://github.com/tangrams/landgrab

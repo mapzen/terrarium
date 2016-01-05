@@ -6,15 +6,15 @@ sources:
         url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
     terrain:
         type: GeoJSON
-        url: //52.70.150.13/data/B/{z}-{x}-{y}.json
+        url: //localhost:8000/data/B/{z}-{x}-{y}.json
     elevation:
         type: Raster
-        url: //52.70.150.13/data/B/{z}-{x}-{y}.png
+        url: //localhost:8000/data/B/{z}-{x}-{y}.png
 textures:
     elevation:
         url:
     sem:
-        url: ../imgs/sem-metal-0012.jpg
+        url: //localhost:8000/imgs/sem-metal-0012.jpg
     sem_spec:
         url: https://cdn.rawgit.com/mapzen/terrarium/gh-pages/imgs/sem-sky-0001.jpg
 scene:
@@ -210,10 +210,10 @@ styles:
         material:
             ambient: .5
             specular:
-                texture: sem
+                texture: sem_spec
                 mapping: spheremap
             diffuse:
-                texture: sem_spec
+                texture: sem
                 mapping: spheremap
     elevate_lns:
         base: lines

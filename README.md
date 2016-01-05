@@ -452,7 +452,7 @@ Now using the script [```install.sh```](https://github.com/mapzen/terrarium/blob
 
 ![Amazon Server](imgs/10-amazon-server.png)
 
-### 18–05-15: Fixing glitch on tile edges
+### 12–18-15: Fixing glitch on tile edges
 
 Finally fixed the tile-edge glitch which was made by two different reasons. There was extra geometry been constructed from building vertices outside the tile boundaries, and a problem with the ```modelPosition()``` output on ```getTileCoords()```. Now that module looks like this:
 
@@ -487,6 +487,13 @@ Now tiles stitch perfectly between each other:
 And finally we can appreciate building with flat roofs.
 
 ![](imgs/11-fixed-tile-edges-01.png) 
+
+### 01–05-16: Improving speed
+
+Terrain geometry tiles (```.json``` files on ```data/B``` folder) had more precession than the raster elevation image (```.png``` files on ```data/B``` folder). By downsampling the precession of the computed vertices to the same as the raster image (255x255) we save almost 50% on critical tiles. For example tile ```9-82-198.json``` use to compute 30,663 vertices into 42,008 triangles producing a TopoJSON file of 28.5MB. After the simplification the total amount of triangles go reduce to 22.468, which means 17.2 MB.
+
+This number still is very big, so I will keep researching ways to reduce the number of triangles with out reducing visual artifacts or degenerated geometry.
+
 
 ## TODO’s
 

@@ -58,9 +58,29 @@ def remap(value, leftMin, leftMax, rightMin, rightMax):
     else:
         return rightMin
 
+def remapi(value, leftMin, leftMax, rightMin, rightMax):
+    # Figure out how 'wide' each range is
+    leftSpan = leftMax - leftMin
+    if (leftSpan != 0): 
+        rightSpan = rightMax - rightMin
+
+        # Convert the left range into a 0-1 range (float)
+        valueScaled = float(value - leftMin) / float(leftSpan)
+
+        # Convert the 0-1 range into a value in the right range.
+        return int(rightMin + (valueScaled * rightSpan))
+    else:
+        return int(rightMin)
+
 # [min_in_x, max_in_x, min_in_y, max_in_y], [min_out_x, max_out_x, min_out_y, max_out_y]
 def remapPoints(P, in_bbox, out_bbox ):
     points = []
     for p in P:
         points.append([remap(p[0], in_bbox[0], in_bbox[1], out_bbox[0], out_bbox[1]), remap(p[1], in_bbox[2], in_bbox[3], out_bbox[2], out_bbox[3])])
+    return points
+
+def remapIPoints(P, in_bbox, out_bbox ):
+    points = []
+    for p in P:
+        points.append([remapi(p[0], in_bbox[0], in_bbox[1], out_bbox[0], out_bbox[1]), remapi(p[1], in_bbox[2], in_bbox[3], out_bbox[2], out_bbox[3])])
     return points

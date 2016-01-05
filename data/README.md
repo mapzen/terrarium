@@ -15,7 +15,7 @@ cd terrarium
 
 ```makeBTiles.py``` require a OSM ID of the place you want to make tiles for it. To get this id go to [openStreetMap](http://www.openstreetmap.org/) and type the name of a city, and search for the number between ```(``` ```)```.
 
-![](imgs/10-OSM.png)
+![](../imgs/10-OSM.png)
 
 Then pass this number as the first argument of the script, while the third argument is the range of zoom you are interested
 
