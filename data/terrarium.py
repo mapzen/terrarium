@@ -351,7 +351,7 @@ def makeTilesOfPoints(path, points, zoom, doPNGs):
     tiles = getTilesForPoints(points, zoom)
 
     ## download tiles
-    print "\Makeing %i tiles at zoom level %i" % (len(tiles), zoom)
+    print "\nMakeing %i tiles at zoom level %i" % (len(tiles), zoom)
 
     ## make/empty the tiles folder
     if not os.path.exists(path):
