@@ -29,85 +29,85 @@ lights:
         diffuse: .7
         ambient: .5
 layers:
-    water:
-        data: { source: osm }
-        draw:
-            elevate_lns:
-                order: 1
-                color: gray
-                width: 1px
+    # water:
+    #     data: { source: osm }
+    #     draw:
+    #         elevate_lns:
+    #             order: 1
+    #             color: gray
+    #             width: 1px
     terrain:
         data: { source: terrain }
         draw:
             elevate_cls:
                 order: 0
                 color: white
-    roads:
-        data: { source: osm, layer: roads }
-        filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
-        draw:
-            elevate_lns:
-                order: 0
-                color: [.7,.7,.7]
-                width: [[6,0px], [7,.25px], [10, .5px], [15, .75px], [17, 5m]]
-        highway:
-            filter: { kind: highway }
-            draw:
-                elevate_lns:
-                    order: 1
-                    color: [.8,.8,.8]#[1.000,0.897,0.058]
-                    width: [[1,0px], [6,.25px], [11, 2px], [14, 3px], [16, 4px], [17, 10m]]
-            link:
-                filter: { is_link: yes } # on- and off-ramps, etc
-                draw:
-                    elevate_lns:
-                        color: [.7,.7,.7]#[1.000,0.933,0.710]
-                        width: [[10,0px], [14, 3px], [16, 5px], [18, 10m]]
-                tunnel-link:
-                    filter: {is_tunnel: yes, $zoom: {min: 13} }
-                    draw:
-                        elevate_lns:
-                            color: [.5,.5,.5]#[0.805,0.748,0.557]
-            tunnel:
-                filter: {is_tunnel: yes, $zoom: {min: 13} }
-                draw:
-                    elevate_lns:
-                        order: -1
-                        color: [.5,.5,.5]#[0.805,0.748,0.557]
-        major_road:
-            filter: { kind: major_road }
-            draw:
-                elevate_lns:
-                    color: [[13, [.6,.6,.6]], [17, white]]
-                    width: [[1,0px], [6,.5px], [11,1px], [14, 2px], [16, 2.5px], [19, 8m]]
-                    primary:
-                        filter: { highway: primary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [11, 1.5px], [13, 2.5px], [16, 2.5px], [19, 8m]]
-                    secondary:
-                        filter: { highway: secondary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [13, 1.5px], [14, 2.5px], [16, 2.5px], [19, 8m]]
-                    tertiary:
-                        filter: { highway: tertiary }
-                        draw:
-                            elevate_lns:
-                                width: [[1,0px], [6,.5px], [11,1px], [13, .75px], [14, 2.5px], [16, 2.5px], [19, 8m]]
-        path:
-            filter: { kind: path }
-            draw:
-                elevate_lns:
-                    color: [0.8, 0.8, 0.8]
-                    width: [[14,.1px],[16,.5px], [17, 2m]]
-    buildings:
-        data: { source: osm }
-        draw:
-            elevate_ply:
-                order: 0
-                color: white
-                extrude: true
+    # roads:
+    #     data: { source: osm, layer: roads }
+    #     filter: { $zoom: {min: 7}, not: { highway: service, kind: [rail, ferry] } }
+    #     draw:
+    #         elevate_lns:
+    #             order: 0
+    #             color: [.7,.7,.7]
+    #             width: [[6,0px], [7,.25px], [10, .5px], [15, .75px], [17, 5m]]
+    #     highway:
+    #         filter: { kind: highway }
+    #         draw:
+    #             elevate_lns:
+    #                 order: 1
+    #                 color: [.8,.8,.8]#[1.000,0.897,0.058]
+    #                 width: [[1,0px], [6,.25px], [11, 2px], [14, 3px], [16, 4px], [17, 10m]]
+    #         link:
+    #             filter: { is_link: yes } # on- and off-ramps, etc
+    #             draw:
+    #                 elevate_lns:
+    #                     color: [.7,.7,.7]#[1.000,0.933,0.710]
+    #                     width: [[10,0px], [14, 3px], [16, 5px], [18, 10m]]
+    #             tunnel-link:
+    #                 filter: {is_tunnel: yes, $zoom: {min: 13} }
+    #                 draw:
+    #                     elevate_lns:
+    #                         color: [.5,.5,.5]#[0.805,0.748,0.557]
+    #         tunnel:
+    #             filter: {is_tunnel: yes, $zoom: {min: 13} }
+    #             draw:
+    #                 elevate_lns:
+    #                     order: -1
+    #                     color: [.5,.5,.5]#[0.805,0.748,0.557]
+    #     major_road:
+    #         filter: { kind: major_road }
+    #         draw:
+    #             elevate_lns:
+    #                 color: [[13, [.6,.6,.6]], [17, white]]
+    #                 width: [[1,0px], [6,.5px], [11,1px], [14, 2px], [16, 2.5px], [19, 8m]]
+    #                 primary:
+    #                     filter: { highway: primary }
+    #                     draw:
+    #                         elevate_lns:
+    #                             width: [[1,0px], [6,.5px], [11,1px], [11, 1.5px], [13, 2.5px], [16, 2.5px], [19, 8m]]
+    #                 secondary:
+    #                     filter: { highway: secondary }
+    #                     draw:
+    #                         elevate_lns:
+    #                             width: [[1,0px], [6,.5px], [11,1px], [13, 1.5px], [14, 2.5px], [16, 2.5px], [19, 8m]]
+    #                 tertiary:
+    #                     filter: { highway: tertiary }
+    #                     draw:
+    #                         elevate_lns:
+    #                             width: [[1,0px], [6,.5px], [11,1px], [13, .75px], [14, 2.5px], [16, 2.5px], [19, 8m]]
+    #     path:
+    #         filter: { kind: path }
+    #         draw:
+    #             elevate_lns:
+    #                 color: [0.8, 0.8, 0.8]
+    #                 width: [[14,.1px],[16,.5px], [17, 2m]]
+    # buildings:
+    #     data: { source: osm }
+    #     draw:
+    #         elevate_ply:
+    #             order: 0
+    #             color: white
+    #             extrude: true
 styles:
     ##################################################################   MODULES
     space-tile:
@@ -221,9 +221,11 @@ styles:
         shaders:
             extensions: OES_standard_derivatives
             defines:
-                    ZOFFSET: -1
+                ZOFFSET: -1
             blocks:
                 normal: |
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
-                    normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    //normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
                     #endif
+                color: |
+                    color.rgb = vec3(n_height);
