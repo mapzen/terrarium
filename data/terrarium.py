@@ -47,11 +47,15 @@ def getPointsFromTile(x, y, zoom, layers):
 def getPointsAndGroupsFromTile(x, y, zoom, layers):
     KEY = "vector-tiles-NPGZu-Q"
     bbox = getTileBoundingBox(x, y, zoom)
-
-    r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
-    j = json.loads(r.text)
     P = [] # Array of points
     G = [] # Group of vertices with forced height (buildings)
+
+    try:
+        r = requests.get(("http://vector.mapzen.com/osm/all/%i/%i/%i.json?api_key="+KEY) % (zoom,x,y))
+        j = json.loads(r.text)
+    except:
+        print "Unexpected error fetching vector tile data for: ", (zoom,x,y)
+        return P, G
 
     for layer in j:
         if layer in layers:
@@ -261,16 +265,15 @@ def makeTile(path, lng, lat, zoom, doPNGs):
         points_latlon, groups = getPointsAndGroupsFromTile(tile[0], tile[1], tile[2], layers)
     else:
         points_latlon = getPointsFromTile(tile[0], tile[1], tile[2], layers)
-    points_merc = toMercator(points_latlon)
-
-    # Tessellate points
+    
+    # Check if there is enought vertices 
     if ( len(points_latlon) < 3 ):
         print(" Not enought points on tile... nothing to do")
         return
 
-    # print "Vertices " + str(len(points_latlon))
+    # Tessellate points
+    points_merc = toMercator(points_latlon)
     triangles = getTrianglesFromPoints(points_latlon, tile)
-    # print "Triangles " + str(len(triangles))
     makeGeoJsonFromTriangles(path, name, triangles)
 
     # Elevation
