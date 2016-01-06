@@ -251,10 +251,10 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     if os.path.isfile(path+'/'+name+".json"):
         if doPNGs:
             if os.path.isfile(path+'/'+name+".png"):
-                print(" Tile already created... skiping")
+                # print(" Tile already created... skiping")
                 return
         else:
-            print(" Tile already created... skiping")
+            # print(" Tile already created... skiping")
             return
 
     # Vertices
@@ -280,7 +280,7 @@ def makeTile(path, lng, lat, zoom, doPNGs):
     heights = []
     if doPNGs:
         if os.path.isfile(path+'/'+name+".png"):
-            print("Tile already created... skiping")
+            # print("Tile already created... skiping")
             return
         heights = getElevationFromPoints(points_latlon)
         heights = getEquilizedHeightByGroup(heights, groups)
