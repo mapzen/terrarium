@@ -26,7 +26,7 @@ with open(CITIES, "r") as lines:
         city = line.split(',')
         OSM_ID = city[1].rstrip('\r\n').strip()
 
-        print "Start coocking tiles for city " + city[0]
+        print "\nStart coocking tiles for city " + city[0]
         points = getPointsOfID(OSM_ID)
         
         for zoom in zoom_array:
