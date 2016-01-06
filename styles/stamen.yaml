@@ -1,0 +1,208 @@
+﻿# Author @patriciogv - 2015
+
+sources:
+    osm:
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
+    terrain:
+        type: GeoJSON
+        url: //52.70.150.13/data/B/{z}-{x}-{y}.json
+    elevation:
+        type: Raster
+        url: //52.70.150.13/data/B/{z}-{x}-{y}.png
+    stamen:
+        type: Raster
+        url: http://spaceclaw.stamen.com/terrain/{z}/{x}/{y}.png
+textures:
+    elevation:
+        url:
+    stamen:
+        url:
+scene:
+    background: 
+        color: '#353535'
+cameras:
+    camera1:
+        type: perspective
+        vanishing_point: [0, -500]
+lights:
+    directional1:
+        type: directional
+        direction: [.1, .5, -1]
+        diffuse: .7
+        ambient: .5
+layers:
+    buildings:
+        data: { source: osm }
+        draw:
+            elevate_ply:
+                order: 0
+                color: [.4,.7,.7,.4]
+                extrude: true
+    ocean:
+        data: { source: osm, layer: water }
+        draw:
+            fix_water:
+                order: 1
+                color: [0.1,0.1,0.1]
+    terrain:
+        data: { source: terrain }
+        draw:
+            elevate_cls:
+                order: 0
+                color: white
+styles:
+    space-tile:
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    varying vec3 v_pos;
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+    geometry-matrices:
+        shaders:
+            defines:
+                PI: 3.14159265358979323846
+            blocks:
+                global: |
+                    mat2 rotate2D (float angle) {
+                        return mat2(cos(angle),-sin(angle),
+                                    sin(angle),cos(angle));
+                    }
+                    mat3 rotateX3D (float phi) {
+                        return mat3(
+                            vec3(1.,0.,0.),
+                            vec3(0.,cos(phi),-sin(phi)),
+                            vec3(0.,sin(phi),cos(phi)));
+                    }
+                    mat3 rotateY3D (float theta) {
+                        return mat3(
+                            vec3(cos(theta),0.,-sin(theta)),
+                            vec3(0.,1.,0.),
+                            vec3(sin(theta),0.,cos(theta)));
+                    }
+                    mat3 rotateZ3D (float psi) {
+                        return mat3(
+                            vec3(cos(psi),-sin(psi),0.),
+                            vec3(sin(psi),cos(psi),0.),
+                            vec3(0.,0.,1.));
+                    }
+    geometry-terrain:
+        animated: true
+        mix: [space-tile]
+        shaders:
+            uniforms:
+                u_elevation: elevation
+                u_stamen: stamen
+                u_offset: [0, 0]
+            defines:
+                ZOFFSET: 0
+            blocks:
+                global: |
+                    varying vec3 v_orig_pos;
+                    varying vec3 v_final_pos;
+
+                    float getHeight() {
+                        vec2 st = getTileCoords();
+                        vec3 color = texture2D(u_elevation, st).rgb;
+                        if (color.rg != vec2(0.0)) {
+                            return -32768.+color.g*65025.+color.b*255.;
+                        } else {
+                            return -1.0;
+                        }
+                    }
+
+                    void extrudeTerrain(inout vec4 position) {
+                        vec2 pos = position.xy;
+                        float height = getHeight();
+                        if (height != -1.0) {
+                            position.z += height;
+                        }
+                    }
+                position: |
+                    position.z += ZOFFSET*u_meters_per_pixel;
+                    v_orig_pos = position.xyz;
+                    extrudeTerrain(position);
+                    v_final_pos = position.xyz;
+                normal: |
+                    float height = v_final_pos.z;
+                    float n_height = height/500.;
+    tilt:
+        animated: true
+        mix: [geometry-matrices]
+        shaders:
+            uniforms:
+                u_offset: [0, 0]
+            blocks:
+                position: |
+                    position.xyz = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * position.xyz;
+    grids-grid:
+        shaders:
+            blocks:
+                global: |
+                    // Draw a grid in the space a specific resolution and pressition
+                    bool grid(vec2 st, float res, float press){
+                        vec2 grid = fract(st*res);
+                        return grid.x < res*press || grid.y < res*press;
+                    }
+                    //
+                    // Draw a grid in the space a specific resolution
+                    bool grid(vec2 st, float res){
+                        return grid(st, res, 1.0);
+                    }
+    grids-tile:
+        mix: [grids-grid]
+        shaders:
+            blocks:
+                global: |
+                    // Draw a grid using tile coordenates in a specific resolution
+                    float tileGrid(float res){
+                        vec2 st = getTileCoords()*100.*res;
+                        float pct = 0.0;
+                        float press = 0.4+(1.0-fract(u_map_position.z))*0.1;
+                        if (grid(st,0.01,press)) pct += 0.5;
+                        if (grid(st,0.1,press)) pct += 0.1;
+                        return pct;
+                    }
+                    // Draw two grid that smoothly interpolates acording to zooms
+                    float tileGrid(){ 
+                        return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
+                    }
+    ##################################################################  ELEVATION STYLES 
+    elevate_base:
+        shaders:
+        mix: [geometry-terrain, tilt]
+    elevate_ply:
+        base: polygons
+        mix: [elevate_base]
+        blend: inlay
+    elevate_lns:
+        base: lines
+        mix: [geometry-terrain, tilt]
+        lighting: false
+        shaders:
+            defines:
+                ZOFFSET: 1.
+    elevate_cls:
+        base: polygons
+        mix: [elevate_base]
+        shaders:
+            blocks:
+                color: |
+                    color.rgb = texture2D(u_stamen, getTileCoords()).rgb;
+    fix_water:
+        base: polygons
+        mix: [elevate_base, grids-tile]
+        shaders:
+            blocks:
+                color: |
+                    color.rgb += vec3(.2)*tileGrid();
