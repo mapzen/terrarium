@@ -12,7 +12,7 @@ sources:
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
     stamen:
         type: Raster
-        url: http://spaceclaw.stamen.com/terrain/{z}/{x}/{y}.png
+        url: http://c.tile.stamen.com/terrain-background/{z}/{x}/{y}.jpg
 textures:
     elevation:
         url:
@@ -37,7 +37,7 @@ layers:
         draw:
             elevate_ply:
                 order: 0
-                color: [.4,.7,.7,.4]
+                color: [.3,.5,.5,.4]
                 extrude: true
     ocean:
         data: { source: osm, layer: water }
@@ -51,6 +51,10 @@ layers:
             elevate_cls:
                 order: 0
                 color: white
+            # elevate_lns:
+            #     order: 0
+            #     color: red
+            #     width: 1px
 styles:
     space-tile:
         shaders:
