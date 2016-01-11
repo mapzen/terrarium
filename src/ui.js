@@ -1,15 +1,15 @@
-function initUI() {
-    var hud = document.getElementById("hud");
+var UI;
 
-    if ( scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined ) {
-        hud.innerHTML += '  <div id="level">' +
-                         '      <div id="level_display">0.0m</div>' +
-                         '      <input id="level_range" type="range" min="0" max="32" step="1" value="0" oninput="levelChange(this.value)" onchange="levelChange(this.value)"/>' +
-                         '  </div>';
+function initUI() {
+    var callback = function(v){ debug.innerHTML = v; }
+
+    UI = new UIL.Gui('top:5px; right:10px;', 300, true);
+
+    if (scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined) {
+        UI.add('slide',  { name:'sea level (m)', callback:setSeaLevel, min:-10, max:100, value:0, precision:0 });
     }
     
-    addButton("orbit");
-    addButton("manual");
+    UI.add('list', { name:'camera', callback:cameraChange, list:["orbit","manual","fix"]});
 
     if ( JSON.stringify(scene.background.color) === "[1,1,1,1]") {
         console.log('Load Light theme');
@@ -25,7 +25,17 @@ function loadCSS(filename) {
     document.getElementsByTagName("head")[0].appendChild(fileref)
 }
 
-function levelChange(value) {
+function cameraChange(v) {
+    controls.camera = v;
+    for (var ui of UI.uis) {
+        if (ui.txt && ui.txt === "camera") {
+            console.log("Force",v);
+            ui.value = v;
+        }
+    }   
+}
+
+function setSeaLevel(value) {
     value *= 2.;
     for (var style in scene.styles) {
         if (scene.styles[style] &&
@@ -37,39 +47,4 @@ function levelChange(value) {
     }
     var displ = document.getElementById("level_display");
     displ.innerHTML = value.toFixed(1) + "m";
-}
-
-// =================================================== BUTTON
-function addButton(name) {
-    var hud = document.getElementById("hud");
-    var value = getControl(name);
-    if (value) {
-        value += ' checked';
-    } else {
-        value = '';
-    }
-
-    hud.innerHTML += '<div id="'+name+'" class="button"> <input type="checkbox" name="checkbox-option" id="button_'+name+'" class="hide-checkbox" value="'+name+'" '+value+'> <label onclick="onButtonClick(this)">'+name+'</label> </div>';
-}
-
-function setControl(name, value) {
-    controls[name] = value;
-    var button = document.getElementById("button_"+name);
-    if (button !== undefined) {
-        button.checked = controls[name];
-    }
-}
-
-function getControl(name) {
-    return controls[name];
-}
-
-function onButtonClick(button) {
-    setControl(button.innerHTML,!getControl(button.innerHTML));
-
-    if (button.innerHTML === "manual") {
-        setControl("orbit",false);
-    } else  if (button.innerHTML === "orbit") {
-        setControl("manual",false);
-    }
 }

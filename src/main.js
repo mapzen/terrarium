@@ -5,8 +5,7 @@ var controls = {
     offset: [0.5,0], 
     offset_target: [0.5, 0, 16], 
     water_height: 0,
-    orbit: true, 
-    manual: false
+    camera: "orbit"
 };
 
 
@@ -79,9 +78,9 @@ function init() {
     // document.body.ondrag
     map.on('mousedown', function () {
         bMousePressed = true;
-        setControl("orbit", false);
-        controls.offset_target[0] = .5;
-        controls.offset_target[1] = 0;
+        if (controls.camera === "orbit") {
+            cameraChange("fix");
+        }
     });
 
     map.on('mouseup', function () {
@@ -100,12 +99,16 @@ function update() {
         speed = .3;
     }
 
-    if (getControl("orbit")) {
+    if (controls.camera === "orbit") {
         var d = new Date();
         var t = d.getTime()/1000;
         controls.offset_target[0] = .5+Math.abs(Math.sin(t*0.025));
         controls.offset_target[1] = Math.abs(Math.cos(t*0.025));
         controls.offset_target[2] = 18+Math.sin(Math.PI*.25+t*0.02)*2.5;
+    } else if (controls.camera === "fix") {
+        speed = .5;
+        controls.offset_target[0] = .5;
+        controls.offset_target[1] = 0;
     }
 
     var target = [(Math.PI/2.-controls.offset_target[1]*Math.PI/2.), controls.offset_target[0]*Math.PI];
@@ -127,7 +130,7 @@ function update() {
 
 // ============================================= EVENT
 function onMouseUpdate (e) {
-    if (!bMousePressed && getControl("manual")) {
+    if (!bMousePressed && controls.camera === "manual") {
         controls.offset_target[0] = Math.max(0.,Math.min(1.,e.pageX/screen.width));
         controls.offset_target[1] = 1.-Math.max(0.,Math.min(1.,e.pageY/screen.height));
     }
