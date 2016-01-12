@@ -14,3 +14,15 @@ body {
     padding: 0px;
     z-index: 0;
 }
+
+#settings { 
+    position: absolute; 
+    top:8px; 
+    right:8px; 
+    text-align: right;
+    color:#fff; 
+    background: #121212; 
+    opacity:0.8;
+    padding: 6px;
+    z-index: 2;
+}

@@ -1,15 +1,29 @@
 var UI;
+var camera;
+var slider;
 
 function initUI() {
-    var callback = function(v){ debug.innerHTML = v; }
-
-    UI = new UIL.Gui('top:5px; right:10px;', 300, true);
+    var isSeaLevel = false;
+    var height_total = 25;
 
     if (scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined) {
-        UI.add('slide',  { name:'sea level (m)', callback:setSeaLevel, min:-10, max:100, value:0, precision:0 });
+        isSeaLevel = true;
+        height_total = 220;
+    }
+
+    UI = new xgui({ width: 110, height: height_total, backgroundColor: "#dddddd", frontColor: "#444444", dimColor: "#dddddd" });
+
+    var settingsDiv = document.getElementById('settings');
+    settingsDiv.appendChild(UI.getDomElement());
+
+    camera = new UI.DropDown( {x:5, y: 5, values: ["orbit","manual","fix"] } );
+    camera.value.bind(cameraChange);
+
+    if (isSeaLevel) {
+        slider = new UI.VSlider( {x:30, y:30, width: 50, height: 180, value: controls.water_height, min:-10, max:100} );
+        slider.value.bind(setSeaLevel);
     }
     
-    UI.add('list', { name:'camera', callback:cameraChange, list:["orbit","manual","fix"]});
 
     if ( JSON.stringify(scene.background.color) === "[1,1,1,1]") {
         console.log('Load Light theme');
@@ -45,6 +59,4 @@ function setSeaLevel(value) {
             scene.styles[style].shaders.uniforms.u_water_height = value;
         }
     }
-    var displ = document.getElementById("level_display");
-    displ.innerHTML = value.toFixed(1) + "m";
 }
