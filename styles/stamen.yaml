@@ -188,7 +188,6 @@ styles:
     elevate_ply:
         base: polygons
         mix: [elevate_base]
-        blend: inlay
     elevate_lns:
         base: lines
         mix: [geometry-terrain, tilt]
