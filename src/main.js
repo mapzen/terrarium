@@ -82,6 +82,8 @@ function init() {
             cameraChange("fix");
             camera.dropdown.selectedIndex = 2
         }
+        controls.offset_target[0] = .5;
+        controls.offset_target[1] = 0;
     });
 
     map.on('mouseup', function () {
