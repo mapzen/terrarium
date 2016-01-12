@@ -41,12 +41,6 @@ function loadCSS(filename) {
 
 function cameraChange(v) {
     controls.camera = v;
-    for (var ui of UI.uis) {
-        if (ui.txt && ui.txt === "camera") {
-            console.log("Force",v);
-            ui.value = v;
-        }
-    }   
 }
 
 function setSeaLevel(value) {

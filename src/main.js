@@ -80,6 +80,7 @@ function init() {
         bMousePressed = true;
         if (controls.camera === "orbit") {
             cameraChange("fix");
+            camera.dropdown.selectedIndex = 2
         }
     });
 
