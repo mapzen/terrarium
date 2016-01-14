@@ -67,3 +67,11 @@ Others:
 * Barcelona: 347950
 * Los Angeles: 207359
 * Tokyo: 265018692
+
+# References
+
+http://www.nodc.noaa.gov/SatelliteData/jason/
+https://coast.noaa.gov/digitalcoast/tools/slr
+http://noaa.maps.arcgis.com/apps/Compare/storytelling_compare/index.html?appid=06781cd885af42b7a71a9e2956bcb0fa
+http://sealevel.climatecentral.org/research/methods
+
