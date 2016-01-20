@@ -1,56 +1,78 @@
 var UI;
 var camera;
-var slider;
+var uniforms = {};
 
 function initUI() {
-    var isSeaLevel = false;
-    var height_total = 25;
+    const ui_height = 18;
 
-    if (scene.config.styles['geometry-terrain'].shaders.uniforms['u_water_height'] !== undefined) {
-        isSeaLevel = true;
-        height_total = 220;
+    for (var style in scene.styles) {
+        if (scene.styles[style].shaders.uniforms) {
+            for (var uniform in scene.styles[style].shaders.uniforms) {
+                var u = scene.styles[style].shaders.uniforms[uniform];
+                if (uniform === 'u_offset') {
+                    continue;
+                }
+
+                if ( u instanceof Array) {
+                    uniforms[uniform] = { d: u.length, value: u};
+                } else if ( typeof u === 'number') {
+                    uniforms[uniform] = { d: 1, value: u };
+                }
+            }
+        }
     }
 
+    var height_total = 20;
+    for (var uniform in uniforms) {
+        height_total += ui_height + ui_height*uniforms[uniform].d;
+    }
+    height_total += ui_height;
     UI = new xgui({ width: 110, height: height_total, backgroundColor: "#dddddd", frontColor: "#444444", dimColor: "#dddddd" });
 
     var settingsDiv = document.getElementById('settings');
     settingsDiv.appendChild(UI.getDomElement());
 
-    camera = new UI.DropDown( {x:5, y: 5, values: ["orbit","manual","fix"] } );
+    // adding camera
+    var height = 5;
+    var label = new UI.Label( {x: 5, y: height, text: "Camera:"} );
+    height += ui_height;
+    camera = new UI.DropDown( {x:5, y: height, values: ["orbit","manual","fix"] } );
     camera.value.bind(cameraChange);
 
-    if (isSeaLevel) {
-        slider = new UI.VSlider( {x:30, y:30, width: 50, height: 180, value: controls.water_height, min:-10, max:100} );
-        slider.value.bind(setSeaLevel);
-    }
-    
-
-    if ( JSON.stringify(scene.background.color) === "[1,1,1,1]") {
-        console.log('Load Light theme');
-        loadCSS('css/light.css');
+    // Adding rest of the UI
+    for (var uniform in uniforms) {
+        height += ui_height;
+        uniforms[uniform].label = new UI.Label( {x: 5, y: height, text: uniform + ":"} );
+        if (uniforms[uniform].d === 1) {
+            height += ui_height;
+            uniforms[uniform].ui = new UI.HSlider( {x:5, y:height, value: uniforms[uniform].value, min:0, max:1} );
+            uniforms[uniform].ui.value.bind(uniforms[uniform], "value");
+            uniforms[uniform].ui.value.bind(updateUI);
+        } else {
+            uniforms[uniform].ui = [];
+            for (var i = 0; i < uniforms[uniform].d; i++) {
+                height += ui_height;
+                uniforms[uniform].ui.push(new UI.HSlider( {x:5, y:height, value: uniforms[uniform].value[i], min:0, max:1} ));
+                uniforms[uniform].ui[i].value.bind(uniforms[uniform].value, i);
+                uniforms[uniform].ui[i].value.bind(updateUI);
+            }
+        }
     }
  }
-
-function loadCSS(filename) {
-    var fileref = document.createElement("link")
-    fileref.setAttribute("rel", "stylesheet")
-    fileref.setAttribute("type", "text/css")
-    fileref.setAttribute("href", filename)
-    document.getElementsByTagName("head")[0].appendChild(fileref)
-}
 
 function cameraChange(v) {
     controls.camera = v;
 }
 
-function setSeaLevel(value) {
-    value *= 2.;
+function updateUI(value) {
     for (var style in scene.styles) {
-        if (scene.styles[style] &&
-            scene.styles[style].shaders &&
-            scene.styles[style].shaders.uniforms &&
-            scene.styles[style].shaders.uniforms.u_water_height !== undefined) {
-            scene.styles[style].shaders.uniforms.u_water_height = value;
+        if (scene.styles[style].shaders.uniforms) {
+            for (var uniform in scene.styles[style].shaders.uniforms) {
+                var variable = uniforms[uniform];
+                if (variable) {
+                    scene.styles[style].shaders.uniforms[uniform] = variable.value;
+                }
+            }
         }
     }
 }

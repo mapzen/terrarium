@@ -15,7 +15,7 @@ textures:
         url:
 scene:
     background: 
-        color: white
+        color: [.2,.2,.2]
 cameras:
     camera1:
         type: perspective
@@ -31,7 +31,7 @@ layers:
         data: { source: osm }
         draw:
             fix_water:
-                order: 0
+                order: 1
                 color: [.2,.2,.2]
     terrain:
         data: { source: terrain }
@@ -98,13 +98,13 @@ layers:
                 elevate_lns:
                     color: [0.8, 0.8, 0.8]
                     width: [[14,.1px],[16,.5px], [17, 2m]]
-    buildings:
-        data: { source: osm }
-        draw:
-            elevate_ply:
-                order: 0
-                color: white
-                extrude: true
+    # buildings:
+    #     data: { source: osm }
+    #     draw:
+    #         elevate_ply:
+    #             order: 0
+    #             color: white
+    #             extrude: true
 styles:
     ##################################################################   MODULES
     space-tile:
@@ -158,13 +158,13 @@ styles:
             uniforms:
                 u_elevation: elevation
                 u_offset: [0, 0]
-                u_water_height: 0.
             defines:
                 ZOFFSET: 0
             blocks:
                 global: |
                     varying vec3 v_orig_pos;
                     varying vec3 v_final_pos;
+                    varying vec3 v_rotated_pos;
 
                     float getHeight() {
                         vec2 st = getTileCoords();
@@ -236,57 +236,62 @@ styles:
         base: polygons
         mix: [tilt, grids-tile]
         shaders:
-            defines:
-                ZOFFSET: 10.
+            uniforms:
+                u_zoom: 0.73
             blocks:
                 position: |
-                    position.z += ZOFFSET*u_meters_per_pixel;
+                    position.z += u_zoom*2000.;
                 color: |
                     color.rgb += vec3(.2)*tileGrid();
     ##################################################################  ELEVATION STYLES 
     elevate_base:
         mix: [geometry-terrain, tilt]
+        shaders:
+            defines:
+                ZOFFSET: 20.
+            uniforms:
+                u_zoom: 0.73
+            blocks:
+                position: |
+                    v_rotated_pos = position.xyz;
+                    position.z += ZOFFSET*u_meters_per_pixel;
+                    position.z += u_zoom*2000.;
     elevate_ply:
         base: polygons
         mix: [elevate_base]
         shaders:
             blocks:
-                color: |
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
                 filter: |
                     color.rgb *= vec3(min((height*.001 + .5),1.))*1.3;
     elevate_lns:
         base: lines
-        mix: [geometry-terrain, tilt]
+        mix: [elevate_base]
+        texcoords: true;
         shaders:
             defines:
                 ZOFFSET: .2
-            blocks:
-                color: |
-                    height = getHeight();
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
-                filter: |
-                    color.rgb *= 1.5;
     elevate_cls:
         base: polygons
         mix: [elevate_base]
+        animated: true
         shaders:
             extensions: OES_standard_derivatives
             defines:
-                    ZOFFSET: -1
+                ZOFFSET: 0
+                SCALE: 10000.0
+            uniforms:
+                u_near_clip: 0
+                u_far_clip: 0.08
+                u_focus_distance: 0
             blocks:
                 normal: |
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
                     normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
                     #endif
                 color: |
-                    height = getHeight();
-                    if (height < u_water_height) {
-                        color.rgb *= .5;
-                    }
+                    float near = u_near_clip*SCALE;
+                    float far = u_far_clip*SCALE;
+                    float dist = u_focus_distance*(far*0.01);
+                    color.rgb *= 1.-abs((near-v_rotated_pos.z)/(far-near)-dist);
                 filter: |
                     color.rgb *= vec3(min((height*.001 + .5),1.));

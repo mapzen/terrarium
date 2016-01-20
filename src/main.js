@@ -4,10 +4,8 @@ var gui;
 var controls = {
     offset: [0.5,0], 
     offset_target: [0.5, 0, 16], 
-    water_height: 0,
     camera: "orbit"
 };
-
 
 // ============================================= INIT 
 // Prepair leafleat and tangram
