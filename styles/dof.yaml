@@ -31,7 +31,7 @@ layers:
         data: { source: osm }
         draw:
             fix_water:
-                order: 1
+                order: 0
                 color: [.2,.2,.2]
     terrain:
         data: { source: terrain }
@@ -240,7 +240,7 @@ styles:
                 u_zoom: 0.73
             blocks:
                 position: |
-                    position.z += u_zoom*2000.;
+                    position.z += u_zoom*10000.;
                 color: |
                     color.rgb += vec3(.2)*tileGrid();
     ##################################################################  ELEVATION STYLES 
@@ -255,7 +255,7 @@ styles:
                 position: |
                     v_rotated_pos = position.xyz;
                     position.z += ZOFFSET*u_meters_per_pixel;
-                    position.z += u_zoom*2000.;
+                    position.z += u_zoom*10000.;
     elevate_ply:
         base: polygons
         mix: [elevate_base]
