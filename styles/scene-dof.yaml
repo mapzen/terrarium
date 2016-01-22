@@ -10,17 +10,12 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
-    stamen:
-        type: Raster
-        url: http://c.tile.stamen.com/terrain-background/{z}/{x}/{y}.jpg
 textures:
     elevation:
         url:
-    stamen:
-        url:
 scene:
     background: 
-        color: '#353535'
+        color: black
 cameras:
     camera1:
         type: perspective
@@ -29,8 +24,8 @@ lights:
     directional1:
         type: directional
         direction: [.1, .5, -1]
-        diffuse: .7
-        ambient: .5
+        diffuse: .3
+        ambient: .0
 layers:
     buildings:
         data: { source: osm }
@@ -51,10 +46,6 @@ layers:
             elevate_cls:
                 order: 0
                 color: white
-            # elevate_lns:
-            #     order: 0
-            #     color: red
-            #     width: 1px
 styles:
     space-tile:
         shaders:
@@ -106,7 +97,6 @@ styles:
         shaders:
             uniforms:
                 u_elevation: elevation
-                u_stamen: stamen
                 u_offset: [0, 0]
             defines:
                 ZOFFSET: 0
@@ -114,7 +104,6 @@ styles:
                 global: |
                     varying vec3 v_orig_pos;
                     varying vec3 v_final_pos;
-
                     float getHeight() {
                         vec2 st = getTileCoords();
                         vec3 color = texture2D(u_elevation, st).rgb;
@@ -181,17 +170,54 @@ styles:
                     float tileGrid(){ 
                         return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
                     }
+    rim_light:
+        shaders:
+            blocks:
+                global: |
+                    vec3 rim (vec3 normal, float pct) {
+                        float cosTheta = abs( dot( vec3(0.0,0.0,-1.0) , normal));
+                        return vec3( pct * ( 1. - smoothstep( 0.0, 1., cosTheta ) ) );
+                    }
+    dof:
+        shaders:
+            defines:
+                SCALE: 10000.0
+            uniforms:
+                u_near_clip: 0
+                u_far_clip: 0.2
+                u_focus_distance: 0
+                u_zoom: 0.3
+            blocks:
+                global: |
+                    varying vec3 v_rotated_pos;
+                position: |
+                    v_rotated_pos = position.xyz;
+                    position.z += u_zoom*10000.;
+                normal: |
+                    float near = u_near_clip*SCALE;
+                    float far = u_far_clip*SCALE;
+                    float dist = u_focus_distance*(far*0.01);
+                    float dof = clamp(1.-abs((near-v_rotated_pos.z)/(far-near)-dist),0.,1.);
+
     ##################################################################  ELEVATION STYLES 
     elevate_base:
-        shaders:
-        mix: [geometry-terrain, tilt]
+        mix: [geometry-terrain, tilt, dof, rim_light]
+        blend: inlay
+        shaders: 
+            uniforms:
+                u_rim: .7
+            blocks:
+                filter: |
+                    //color.rgb *= dof;
+                    color.rgb += mix(vec3(0.),rim(normal,u_rim),dof);
+                    color.a = max(color.r,max(color.g,color.b));
+                    
     elevate_ply:
         base: polygons
         mix: [elevate_base]
     elevate_lns:
         base: lines
         mix: [elevate_base]
-        lighting: false
         shaders:
             defines:
                 ZOFFSET: 1.
@@ -199,9 +225,12 @@ styles:
         base: polygons
         mix: [elevate_base]
         shaders:
+            extensions: OES_standard_derivatives
             blocks:
-                color: |
-                    color.rgb = texture2D(u_stamen, getTileCoords()).rgb;
+                normal: |
+                    #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
+                    normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    #endif
     fix_water:
         base: polygons
         mix: [elevate_base, grids-tile]

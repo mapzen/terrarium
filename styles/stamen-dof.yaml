@@ -114,6 +114,7 @@ styles:
                 global: |
                     varying vec3 v_orig_pos;
                     varying vec3 v_final_pos;
+                    varying vec3 v_rotated_pos;
 
                     float getHeight() {
                         vec2 st = getTileCoords();
@@ -183,15 +184,32 @@ styles:
                     }
     ##################################################################  ELEVATION STYLES 
     elevate_base:
-        shaders:
         mix: [geometry-terrain, tilt]
+        shaders:
+            defines:
+                SCALE: 10000.0
+            uniforms:
+                u_near_clip: 0
+                u_far_clip: 0.08
+                u_focus_distance: 0
+                u_zoom: 0.73
+            blocks:
+                position: |
+                    v_rotated_pos = position.xyz;
+                    position.z += ZOFFSET*u_meters_per_pixel;
+                    position.z += u_zoom*10000.;
+                filter: |
+                    float near = u_near_clip*SCALE;
+                    float far = u_far_clip*SCALE;
+                    float dist = u_focus_distance*(far*0.01);
+                    color.rgb *= 1.-abs((near-v_rotated_pos.z)/(far-near)-dist);
+                    
     elevate_ply:
         base: polygons
         mix: [elevate_base]
     elevate_lns:
         base: lines
         mix: [elevate_base]
-        lighting: false
         shaders:
             defines:
                 ZOFFSET: 1.

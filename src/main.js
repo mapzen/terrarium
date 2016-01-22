@@ -27,7 +27,7 @@ map = (function () {
         scrollWheelZoom: 'center'
     });
 
-    var style_file = 'styles/scene.yaml';
+    var style_file = 'scene.yaml';
     var url_search = window.location.search.slice(1);
     if (url_search.length > 0) {
         var ext = url_search.substr(url_search.lastIndexOf('.') + 1);
@@ -42,7 +42,7 @@ map = (function () {
 
     // Tangram Layer
     var layer = Tangram.leafletLayer({
-        scene: style_file,
+        scene: "styles/"+style_file,
         attribution: '<a href="https://mapzen.com/tangram" target="_blank">Tangram</a> | &copy; OSM contributors | <a href="https://mapzen.com/" target="_blank">Mapzen</a>'
     });
 
