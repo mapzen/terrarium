@@ -1,0 +1,82 @@
+﻿# Author @patriciogv - 2015
+
+sources:
+    osm:
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson
+    elevation:
+        type: Raster
+        url: http://crossorigin.me/http://52.72.241.124/{z}/{x}/{y}.u8.png
+textures:
+    elevation:
+        url:
+scene:
+    background: 
+        color: white
+cameras:
+    camera1:
+        type: perspective
+        vanishing_point: [0, -500]
+lights:
+    directional1:
+        type: directional
+        direction: [.1, .5, -1]
+        diffuse: .7
+        ambient: .1
+layers:
+    water:
+        data: { source: osm }
+        draw:
+            polygons:
+                order: 0
+                color: gray
+    earth:
+        data: { source: osm }
+        draw:
+            elevation:
+                order: 1
+                color: white
+styles:
+    space-tile:
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    varying vec3 v_pos;
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+    elevation:
+        base: polygons
+        mix: space-tile
+        shaders:
+            extensions: OES_standard_derivatives
+            uniforms:
+                u_elevation: elevation
+            blocks:
+                normal: |
+                    vec2 st = getTileCoords();
+                    float height = texture2D(u_elevation,st).r;
+
+                    vec3 tile = TANGRAM_TILE_SCALE;
+                    vec2 pixel = vec2(.001);///tile.xy;
+                    float topLeft    = texture2D(u_elevation, st+vec2(-pixel.x, -pixel.y)).r;
+                    float left       = texture2D(u_elevation, st+vec2(-pixel.x,0.0)).r;
+                    float bottomLeft = texture2D(u_elevation, st+vec2(-pixel.x,pixel.y)).r;
+                    float top        = texture2D(u_elevation, st+vec2(0.0,-pixel.y)).r;
+                    float bottom     = texture2D(u_elevation, st+vec2(0.0,pixel.y)).r;
+                    float topRight   = texture2D(u_elevation, st+vec2(pixel.x,-pixel.y)).r;
+                    float right      = texture2D(u_elevation, st+vec2(pixel.x,0.0)).r;
+                    float bottomRight = texture2D(u_elevation, st+vec2(pixel.x,pixel.y)).r;
+                    float dX = topRight + 2.0 * right + bottomRight - topLeft - 2.0 * left - bottomLeft;
+                    float dY = bottomLeft + 2.0 * bottom + bottomRight - topLeft - 2.0 * top - topRight;
+                    normal = normalize(vec3(dX, dY, 0.01));
+ 
+                    //color.rgb = normal;
