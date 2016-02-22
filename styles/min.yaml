@@ -11,8 +11,6 @@ sources:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
 textures:
-    sky_sem:
-        url: https://cdn.rawgit.com/mapzen/terrarium/gh-pages/imgs/sem-sky-0001.jpg
     elevation:
         url:
 scene:
