@@ -10,8 +10,13 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
+    normal:
+        type: Raster
+        url: http://crossorigin.me/http://52.72.241.124/normalmap/{z}/{x}/{y}.png
 textures:
     elevation:
+        url:
+    normal:
         url:
 scene:
     background: 
@@ -158,6 +163,7 @@ styles:
         shaders:
             uniforms:
                 u_elevation: elevation
+                u_normal: normal
                 u_offset: [0, 0]
             defines:
                     ZOFFSET: 0
@@ -206,7 +212,7 @@ styles:
                     ZOFFSET: 0
             blocks:
                 color: |
-                    color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
+                    //color.rgb *= vec3(min((worldPosition().z*.001 + .5),1.));
     elevate_lns:
         base: lines
         mix: [elevate_base]
@@ -222,8 +228,11 @@ styles:
                 ZOFFSET: -1
             blocks:
                 normal: |
+                    normal.rgb = texture2D(u_normal,getTileCoords()).rgb;
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
-                    //normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    if (normal.rgb == vec3(0.0)) {
+                        normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    }
                     #endif
                 color: |
-                    color.rgb = vec3(n_height);
+                    //color.rgb = vec3(n_height);

@@ -10,6 +10,9 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
+    normal:
+        type: Raster
+        url: http://crossorigin.me/http://52.72.241.124/normalmap/{z}/{x}/{y}.png
 textures:
     elevation:
         url:
@@ -17,6 +20,8 @@ textures:
         url: ../imgs/sem-metal-0012.jpg
     sem_spec:
         url: ../imgs/sem-sky-0001.jpg
+    normal:
+        url:
 scene:
     background: 
         color: black
@@ -76,7 +81,7 @@ styles:
                     // Get the coordinates in tile space
                     // ================================
                     vec2 getTileCoords() {
-                        return v_pos.xy;
+                        return vec2(v_pos.x,v_pos.y+1.0);
                     }
 
                 position: |
@@ -116,6 +121,7 @@ styles:
         shaders:
             uniforms:
                 u_elevation: elevation
+                u_normal: normal
                 u_offset: [0, 0]
             defines:
                 ZOFFSET: 0
@@ -223,9 +229,9 @@ styles:
             diffuse:
                 texture: sem
                 mapping: spheremap
-            specular:
-                texture: sem_spec
-                mapping: spheremap
+            # specular:
+                # texture: sem_spec
+                # mapping: spheremap
             shininess: 2.
         shaders:
             extensions: OES_standard_derivatives
@@ -233,11 +239,11 @@ styles:
                 u_color: [1.0,1.0,1.0]
             blocks:
                 normal: |
+                    normal.rgb = texture2D(u_normal,getTileCoords()).rgb;
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
-                    normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
-                    //normal.rgb = normal.rgb*2.-1.;
-                    //normal.rgb = rotateX3D(abs(cos(u_offset.x))) * rotateZ3D(cos(u_offset.y)) * normal.rgb;
-                    //normal.rgb = normal.rgb*.5+.5;
+                    if (normal.rgb == vec3(0.0)) {
+                        normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    }
                     #endif
                 color: |
                     color.rgb *= u_color;

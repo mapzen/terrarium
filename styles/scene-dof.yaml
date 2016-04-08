@@ -10,8 +10,13 @@ sources:
     elevation:
         type: Raster
         url: //52.70.150.13/data/B/{z}-{x}-{y}.png
+    normal:
+        type: Raster
+        url: http://crossorigin.me/http://52.72.241.124/normalmap/{z}/{x}/{y}.png
 textures:
     elevation:
+        url:
+    normal:
         url:
 scene:
     background: 
@@ -57,7 +62,7 @@ styles:
                     // Get the coordinates in tile space
                     // ================================
                     vec2 getTileCoords() {
-                        return v_pos.xy;
+                        return v_pos.xy+vec2(0.,1.);
                     }
 
                 position: |
@@ -228,8 +233,11 @@ styles:
             extensions: OES_standard_derivatives
             blocks:
                 normal: |
+                    //normal.rgb = texture2D(u_normal,getTileCoords()).rgb;
                     #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
-                    normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    if (normal.rgb == vec3(0.0)) {
+                        normal.rgb = normalize( vec3(dFdx(height), dFdy(height), 1.) );
+                    }
                     #endif
     fix_water:
         base: polygons

@@ -65,18 +65,4 @@ styles:
                     vec2 st = getTileCoords();
                     float height = texture2D(u_elevation,st).r;
 
-                    vec3 tile = TANGRAM_TILE_SCALE;
-                    vec2 pixel = vec2(.001);///tile.xy;
-                    float topLeft    = texture2D(u_elevation, st+vec2(-pixel.x, -pixel.y)).r;
-                    float left       = texture2D(u_elevation, st+vec2(-pixel.x,0.0)).r;
-                    float bottomLeft = texture2D(u_elevation, st+vec2(-pixel.x,pixel.y)).r;
-                    float top        = texture2D(u_elevation, st+vec2(0.0,-pixel.y)).r;
-                    float bottom     = texture2D(u_elevation, st+vec2(0.0,pixel.y)).r;
-                    float topRight   = texture2D(u_elevation, st+vec2(pixel.x,-pixel.y)).r;
-                    float right      = texture2D(u_elevation, st+vec2(pixel.x,0.0)).r;
-                    float bottomRight = texture2D(u_elevation, st+vec2(pixel.x,pixel.y)).r;
-                    float dX = topRight + 2.0 * right + bottomRight - topLeft - 2.0 * left - bottomLeft;
-                    float dY = bottomLeft + 2.0 * bottom + bottomRight - topLeft - 2.0 * top - topRight;
-                    normal = normalize(vec3(dX, dY, 0.01));
- 
-                    //color.rgb = normal;
+                    color.rgb = vec3(height);
