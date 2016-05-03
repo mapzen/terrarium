@@ -8,7 +8,6 @@ Surat, 1952514
 Chennai, 3233393892
 Abidjan, 3377982
 Jakarta, 29939632
-New Orleans, 131885
 Ho Chi Minh City, 1973756
 New York City, 175905
 Tianjin, 912999

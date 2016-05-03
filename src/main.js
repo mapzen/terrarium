@@ -18,7 +18,7 @@ map = (function () {
         scrollWheelZoom: 'center'
     });
 
-    var style_file = 'scene.yaml';
+    var style_file = 'default.yaml';
     var url_search = window.location.search.slice(1);
     if (url_search.length > 0) {
         var ext = url_search.substr(url_search.lastIndexOf('.') + 1);

@@ -1,0 +1,139 @@
+﻿# @patriciogv - 2016
+
+import:
+    - http://tangrams.github.io/blocks/global.yaml
+    - http://tangrams.github.io/blocks/functions/map.yaml
+    - http://tangrams.github.io/blocks/geometry/tilt.yaml
+    - http://tangrams.github.io/blocks/geometry/terrarium.yaml
+    - http://tangrams.github.io/blocks/space/tile.yaml
+    - http://tangrams.github.io/blocks/grids/grid.yaml
+
+sources:
+    osm: 
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson?api_key=vector-tiles-JUsa0Gc
+        rasters: [normals, terrarium-raster]
+    normals:
+        type: Raster
+        # url: https://terrain-preview.mapzen.com/normal/{z}/{x}/{y}.png
+        url: https://s3.amazonaws.com/elevation-tiles-prod/normal/{z}/{x}/{y}.png
+        max_zoom: 15
+    terrarium-geom:
+        type: GeoJSON
+        url: http://52.70.150.13/data/B/{z}-{x}-{y}.json
+        max_zoom: 18
+        rasters: [normals, terrarium-raster]
+    terrarium-raster:
+        type: Raster
+        url: http://52.70.150.13/data/B/{z}-{x}-{y}.png
+        max_zoom: 18
+
+cameras:
+    default:
+        type: perspective
+
+scene:
+    background: 
+        color: black
+
+lights:
+    light:
+        type: directional
+        direction: [0.644,-0.552,-0.531]
+        diffuse: .7
+        ambient: .5
+
+layers:
+    terrain:
+        data: { source: terrarium-geom }
+        draw:
+            terrarium_trn:
+                order: 0
+                color: white
+    water:
+        data: { source: osm, layer: water }
+        draw:
+            water:
+                order: 2
+                color: [0.1,0.1,0.1]
+        continental_water:
+            filter: { kind: [riverbank, dock, water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
+            draw:
+                terrarium_lns:
+                    order: 1
+                    color: white
+                    width: 1px
+    earth:
+        data: { source: osm }
+        draw:
+            terrarium_lns:
+                order: 3
+                color: white
+                width: 2px
+    roads:
+        data: { source: osm}
+        filter: { not: { kind: [rail, ferry] } }
+        draw:
+            roads:
+                order: 4
+                color: gray
+                width: [[7,0.0px], [10, .5px], [15, .75px], [17, 5m]]
+    buildings:
+        data: { source: osm }
+        draw:
+            buildings:
+                order: 5
+                color: white
+                extrude: true
+styles:
+    geometry-tilt:
+        shaders:
+            defines:
+                TILT_IN: 14.
+                TILT_OUT: 20.
+    ##################################################################  TERRARIUM STYLES
+    terrarium_base:
+        mix: [geometry-terrarium, geometry-tilt]
+    terrarium_trn:
+        base: polygons
+        mix: terrarium_base
+        shaders:
+            blocks:
+                normal: |
+                    normal = sampleRaster(0).rgb;
+    terrarium_lns:
+        base: lines
+        mix: terrarium_base
+        lighting: false
+        shaders:
+            defines:
+                ZOFFSET: 1.
+    ##################################################################  REGULAR STYLES
+    water:
+        base: polygons
+        mix: [geometry-tilt, space-tile, grids-grid]
+        shaders:
+            blocks:
+                global: |
+                    // Draw a grid using tile coordenates in a specific resolution
+                    float tileGrid(float res){
+                        vec2 st = getTileCoords()*100.*res;
+                        float pct = 0.0;
+                        float press = 0.4+(1.0-fract(u_map_position.z))*0.1;
+                        if (grid(st,0.01,press)) pct += 0.5;
+                        if (grid(st,0.1,press)) pct += 0.1;
+                        return pct;
+                    }
+
+                    // Draw two grid that smoothly interpolates acording to zooms
+                    float tileGrid(){ 
+                        return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
+                    }
+                color: |
+                    color.rgb += vec3(.2)*tileGrid();
+    roads:
+        base: lines
+        mix: terrarium_base
+    buildings:
+        base: polygons
+        mix: terrarium_base
