@@ -1,12 +1,12 @@
 ﻿# @patriciogv - 2016
 
 import:
-    - http://tangrams.github.io/blocks/global.yaml
+    # - http://tangrams.github.io/blocks/global.yaml
     - http://tangrams.github.io/blocks/functions/map.yaml
     - http://tangrams.github.io/blocks/geometry/tilt.yaml
     - http://tangrams.github.io/blocks/geometry/terrarium.yaml
-    - http://tangrams.github.io/blocks/space/tile.yaml
-    - http://tangrams.github.io/blocks/grids/grid.yaml
+    - http://tangrams.github.io/blocks/grids/tile.yaml
+    - http://tangrams.github.io/blocks/filter/height.yaml
 
 sources:
     osm: 
@@ -46,6 +46,7 @@ lights:
 layers:
     terrain:
         data: { source: terrarium-geom }
+        filter: { $zoom: { min: 15 } }
         draw:
             terrarium_trn:
                 order: 0
@@ -54,53 +55,87 @@ layers:
         data: { source: osm, layer: water }
         draw:
             water:
-                order: 2
+                order: 1
                 color: [0.1,0.1,0.1]
         continental_water:
-            filter: { kind: [riverbank, dock, water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
+            filter: { kind: [water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
             draw:
                 terrarium_lns:
-                    order: 1
+                    order: 2
                     color: white
                     width: 1px
     earth:
         data: { source: osm }
-        draw:
-            terrarium_lns:
-                order: 3
-                color: white
-                width: 2px
+        flat:
+            filter: { $zoom: { max: 15 } }
+            draw:
+                normals:
+                    order: 0
+                    color: white
+        # elevated:
+        #     filter: { $zoom: { min: 15 } }
+        #     draw:
+        #         terrarium_lns:
+        #             order: 3
+        #             color: white
+        #             width: 2px
+
     roads:
         data: { source: osm}
         filter: { not: { kind: [rail, ferry] } }
-        draw:
-            roads:
-                order: 4
-                color: gray
-                width: [[7,0.0px], [10, .5px], [15, .75px], [17, 5m]]
+        flat:
+            filter: { $zoom: { max: 15 } }
+            draw:
+                lines:
+                    order: 4
+                    color: gray
+                    width: [[7,0.0px], [10, .5px], [15, .75px]]
+        elevated:
+            filter: { $zoom: { min: 15 } }
+            draw:
+                roads:
+                    order: 4
+                    color: gray
+                    width: [[15, .75px], [17, 5m]]
     buildings:
         data: { source: osm }
-        draw:
-            buildings:
-                order: 5
-                color: white
-                extrude: true
+        flat:
+            filter: { $zoom: { max: 15 } }
+            draw:
+                polygons:
+                    order: 5
+                    color: white
+        elevated:
+            filter: { $zoom: { min: 15 } }
+            draw:
+                buildings:
+                    order: 5
+                    color: white
+                    extrude: true
 styles:
+    filter-height:
+        shaders:
+            blocks:
+                color: |
+                    color.rgb *= min((worldPosition().z*.0001 + .8), 1.);
     geometry-tilt:
         shaders:
             defines:
                 TILT_IN: 14.
-                TILT_OUT: 20.
+                TILT_OUT: 18.
+    normals:
+        base: polygons
+        raster: normal
     ##################################################################  TERRARIUM STYLES
     terrarium_base:
         mix: [geometry-terrarium, geometry-tilt]
     terrarium_trn:
         base: polygons
-        mix: terrarium_base
+        mix: [terrarium_base, filter-height]
         shaders:
             blocks:
                 normal: |
-                    normal = sampleRaster(0).rgb;
+                    normal = (sampleRaster(0).rgb-.5)*2.;
     terrarium_lns:
         base: lines
         mix: terrarium_base
@@ -111,24 +146,9 @@ styles:
     ##################################################################  REGULAR STYLES
     water:
         base: polygons
-        mix: [geometry-tilt, space-tile, grids-grid]
+        mix: [geometry-tilt, grids-tile]
         shaders:
             blocks:
-                global: |
-                    // Draw a grid using tile coordenates in a specific resolution
-                    float tileGrid(float res){
-                        vec2 st = getTileCoords()*100.*res;
-                        float pct = 0.0;
-                        float press = 0.4+(1.0-fract(u_map_position.z))*0.1;
-                        if (grid(st,0.01,press)) pct += 0.5;
-                        if (grid(st,0.1,press)) pct += 0.1;
-                        return pct;
-                    }
-
-                    // Draw two grid that smoothly interpolates acording to zooms
-                    float tileGrid(){ 
-                        return mix(tileGrid(1.),tileGrid(2.),fract(u_map_position.z)); 
-                    }
                 color: |
                     color.rgb += vec3(.2)*tileGrid();
     roads:
@@ -136,4 +156,4 @@ styles:
         mix: terrarium_base
     buildings:
         base: polygons
-        mix: terrarium_base
+        mix: [terrarium_base, filter-height]

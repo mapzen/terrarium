@@ -15,6 +15,7 @@ map = (function () {
     var map = L.map('map',{
         trackResize: true,
         keyboard: false,
+        maxZoom: 18,
         scrollWheelZoom: 'center'
     });
 
