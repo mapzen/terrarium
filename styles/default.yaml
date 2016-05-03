@@ -62,7 +62,7 @@ layers:
             draw:
                 terrarium_lns:
                     order: 2
-                    color: white
+                    color: [0.1,0.1,0.1]
                     width: 1px
     earth:
         data: { source: osm }

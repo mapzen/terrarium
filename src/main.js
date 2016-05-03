@@ -15,8 +15,7 @@ map = (function () {
     var map = L.map('map',{
         trackResize: true,
         keyboard: false,
-        maxZoom: 18,
-        scrollWheelZoom: 'center'
+        maxZoom: 18
     });
 
     var style_file = 'default.yaml';
