@@ -1,7 +1,6 @@
 ﻿# @patriciogv - 2016
 
 import:
-    # - http://tangrams.github.io/blocks/global.yaml
     - http://tangrams.github.io/blocks/functions/map.yaml
     - http://tangrams.github.io/blocks/geometry/tilt.yaml
     - http://tangrams.github.io/blocks/geometry/terrarium.yaml
