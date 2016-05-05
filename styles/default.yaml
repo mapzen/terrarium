@@ -4,7 +4,7 @@ import:
     - http://tangrams.github.io/blocks/functions/map.yaml
     - http://tangrams.github.io/blocks/geometry/tilt.yaml
     - http://tangrams.github.io/blocks/geometry/terrarium.yaml
-    - http://tangrams.github.io/blocks/grids/tile.yaml
+    - http://tangrams.github.io/blocks/patterns/grid.yaml
     - http://tangrams.github.io/blocks/filter/height.yaml
     
 sources:
@@ -145,7 +145,7 @@ styles:
     ##################################################################  REGULAR STYLES
     water:
         base: polygons
-        mix: [geometry-tilt, grids-tile]
+        mix: [geometry-tilt, patterns-grid]
         shaders:
             blocks:
                 color: |
