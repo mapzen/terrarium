@@ -1,0 +1,12 @@
+# Patricio Gonzalez Vivo (@patriciogv) - 2016
+
+import: 
+    - base.yaml
+
+styles:
+    terrarium-lines:
+        base: lines
+        mix: [terrarium-base]
+        shaders:
+            defines:
+                TERRARIUM_ZOFFSET: .2

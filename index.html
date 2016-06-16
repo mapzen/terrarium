@@ -11,21 +11,24 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Terrarium</title>
-    <link rel="stylesheet" href="css/leaflet.css" />
+    
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="src/leaflet.css" />
+    <script type="text/javascript" src="src/leaflet.js"></script>
+    
     <link type='text/css' rel='stylesheet' href="css/style.css">
+    
+    <!-- bog-standard leaflet URL hash -->
+    <script src="src/leaflet-hash.js"></script>
+
+    <script src="https://mapzen.com/tangram/0.8/tangram.debug.js"></script> 
+    <!-- End of 3rd party libraries -->
+    
   </head>
   <body>
     <div id="settings"></div>
     <div id="map"></div>
 
-    <!-- 3rd party libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"></script>
-    <!-- bog-standard leaflet URL hash -->
-    <script src="src/leaflet-hash.js"></script>
-
-    <script src="https://mapzen.com/tangram/0.7/tangram.debug.js"></script> 
-    <!-- End of 3rd party libraries -->
-    
     <!-- MAIN -->
     <script src="src/main.js"></script>
 

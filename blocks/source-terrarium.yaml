@@ -1,0 +1,18 @@
+sources:
+    osm: 
+        type: TopoJSON
+        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson?api_key=vector-tiles-JUsa0Gc
+        rasters: [normals, terrarium-raster]
+    normals:
+        type: Raster
+        url: https://s3.amazonaws.com/elevation-tiles-prod/normal/{z}/{x}/{y}.png
+        max_zoom: 14
+    terrarium-geom:
+        type: GeoJSON
+        url: http://52.70.150.13/data/B/{z}-{x}-{y}.json
+        max_zoom: 18
+        rasters: [normals, terrarium-raster]
+    terrarium-raster:
+        type: Raster
+        url: http://52.70.150.13/data/B/{z}-{x}-{y}.png
+        max_zoom: 18

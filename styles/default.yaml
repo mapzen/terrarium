@@ -1,32 +1,13 @@
 ﻿# @patriciogv - 2016
 
 import:
-    - http://tangrams.github.io/blocks/functions/map.yaml
-    - http://tangrams.github.io/blocks/geometry/tilt.yaml
-    - http://tangrams.github.io/blocks/geometry/terrarium.yaml
-    - http://tangrams.github.io/blocks/patterns/grid.yaml
+    - ../blocks/source-terrarium.yaml
+    - ../blocks/terrarium/lines.yaml
+    - ../blocks/terrarium/polygons.yaml
+    - ../blocks/terrarium/terrain.yaml
+    - http://tangrams.github.io/blocks/filter/grid.yaml
     - http://tangrams.github.io/blocks/filter/height.yaml
     
-sources:
-    osm: 
-        type: TopoJSON
-        url: //vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson?api_key=vector-tiles-JUsa0Gc
-        rasters: [normals, terrarium-raster]
-    normals:
-        type: Raster
-        # url: https://terrain-preview.mapzen.com/normal/{z}/{x}/{y}.png
-        url: https://s3.amazonaws.com/elevation-tiles-prod/normal/{z}/{x}/{y}.png
-        max_zoom: 15
-    terrarium-geom:
-        type: GeoJSON
-        url: http://52.70.150.13/data/B/{z}-{x}-{y}.json
-        max_zoom: 18
-        rasters: [normals, terrarium-raster]
-    terrarium-raster:
-        type: Raster
-        url: http://52.70.150.13/data/B/{z}-{x}-{y}.png
-        max_zoom: 18
-
 cameras:
     default:
         type: perspective
@@ -47,7 +28,7 @@ layers:
         data: { source: terrarium-geom }
         filter: { $zoom: { min: 15 } }
         draw:
-            terrarium_trn:
+            terrarium-terrain:
                 order: 0
                 color: white
     water:
@@ -59,7 +40,7 @@ layers:
         continental_water:
             filter: { kind: [water, basin, reservoir, lake, canal, dam, ditch, drain, river, stream]}
             draw:
-                terrarium_lns:
+                terrarium_lines:
                     order: 2
                     color: [0.1,0.1,0.1]
                     width: 1px
@@ -145,11 +126,7 @@ styles:
     ##################################################################  REGULAR STYLES
     water:
         base: polygons
-        mix: [geometry-tilt, patterns-grid]
-        shaders:
-            blocks:
-                color: |
-                    color.rgb += vec3(.2)*tileGrid();
+        mix: [geometry-tilt, filter-grid]
     roads:
         base: lines
         mix: terrarium_base

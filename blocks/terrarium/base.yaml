@@ -1,0 +1,9 @@
+# Patricio Gonzalez Vivo (@patriciogv) - 2016
+
+import:
+    - https://tangrams.github.io/blocks/geometry/tilt.yaml
+    - geometry.yaml
+
+styles:
+    terrarium-base:
+        mix: [terrarium-geometry, geometry-tilt]

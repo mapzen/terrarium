@@ -1,0 +1,10 @@
+# Patricio Gonzalez Vivo (@patriciogv) - 2016
+
+import:
+    - https://tangrams.github.io/blocks/elevation/normal.yaml
+    - base.yaml
+
+styles:
+    terrarium-terrain:
+        base: polygons
+        mix: [terrarium-base, elevation-normal]
